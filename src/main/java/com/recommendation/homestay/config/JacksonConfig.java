@@ -15,8 +15,7 @@ public class JacksonConfig {
         
         // Register Hibernate5Module to handle lazy-loaded entities properly
         Hibernate5Module hibernate5Module = new Hibernate5Module();
-        // Configure to force lazy loading when serializing (will initialize proxies)
-        // If you want to avoid initializing, use FORCE_LAZY_LOADING to false
+        // Disable forcing lazy loading to avoid triggering lazy initialization during serialization
         hibernate5Module.configure(Hibernate5Module.Feature.FORCE_LAZY_LOADING, false);
         // Serialize identifier for not-loaded lazy associations instead of null
         hibernate5Module.configure(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS, true);
