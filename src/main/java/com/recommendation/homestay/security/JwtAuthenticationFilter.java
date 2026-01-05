@@ -36,9 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                Long userId = tokenProvider.getUserIdFromToken(jwt);
+                // Extract user details directly from JWT token without database lookup
+                // This eliminates the second SQL query and improves performance
+                // Trade-off: User information changes (role, email) require re-login to take effect
+                UserDetails userDetails = tokenProvider.getUserDetailsFromToken(jwt);
+                
+                logger.debug("JWT Authentication Filter: Authenticated user {} from token for request to {}", 
+                           userDetails.getUsername(), request.getRequestURI());
 
-                UserDetails userDetails = customUserDetailsService.loadUserById(userId);
                 UsernamePasswordAuthenticationToken authentication = 
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -46,7 +51,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception ex) {
-            logger.error("Could not set user authentication in security context", ex);
+            logger.error("Could not set user authentication in security context for request to {}: {}", 
+                       request.getRequestURI(), ex.getMessage(), ex);
         }
 
         filterChain.doFilter(request, response);
