@@ -2,6 +2,10 @@
 
 Spring Boot based backend management system for homestay property recommendations with hybrid recommendation algorithms.
 
+> **关于代码生成**: 本项目使用 AI 辅助工具直接生成代码到仓库中。详细的代码生成流程和最佳实践请参考 [CODE_GENERATION_PROCESS.md](CODE_GENERATION_PROCESS.md)。
+>
+> **About Code Generation**: This project uses AI-assisted tools to generate code directly into the repository. For detailed code generation workflow and best practices, please refer to [CODE_GENERATION_PROCESS.md](CODE_GENERATION_PROCESS.md).
+
 ## 功能模块 (Features)
 
 ### 1. 用户管理模块 (User Management)
@@ -315,6 +319,17 @@ mvn clean package
 ```bash
 java -jar target/homestay-recommendation-1.0.0.jar
 ```
+
+## 文档 (Documentation)
+
+本项目提供完整的文档支持：
+
+- **[README.md](README.md)**: 项目概述和快速开始指南
+- **[CODE_GENERATION_PROCESS.md](CODE_GENERATION_PROCESS.md)**: 代码生成流程和工作方式说明
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)**: 完整的 API 接口文档
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: 系统架构设计文档
+- **[DEPLOYMENT.md](DEPLOYMENT.md)**: 详细的部署指南
+- **[PROJECT_SUMMARY.txt](PROJECT_SUMMARY.txt)**: 项目完成总结
 
 ## 许可证 (License)
 

@@ -11,6 +11,12 @@ export const useUserStore = defineStore('user', () => {
 
   function setUser(userData) {
     user.value = userData
+    // 同时将用户信息保存到 localStorage 以便刷新后恢复
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData))
+    } else {
+      localStorage.removeItem('user')
+    }
   }
 
   function setToken(newToken) {
@@ -24,12 +30,29 @@ export const useUserStore = defineStore('user', () => {
 
   function checkAuth() {
     const savedToken = localStorage.getItem('token')
+    const savedUser = localStorage.getItem('user')
+    
     if (savedToken) {
       token.value = savedToken
-      // In a real app, you'd validate the token with the server
-      const userData = authService.getCurrentUser()
-      if (userData) {
-        user.value = userData
+      
+      // 优先使用保存的用户信息
+      if (savedUser) {
+        try {
+          user.value = JSON.parse(savedUser)
+        } catch (error) {
+          console.error('Failed to parse saved user data:', error)
+          // 如果解析失败，尝试从 token 中获取
+          const userData = authService.getCurrentUser()
+          if (userData) {
+            user.value = userData
+          }
+        }
+      } else {
+        // 如果没有保存的用户信息，从 token 中获取
+        const userData = authService.getCurrentUser()
+        if (userData) {
+          user.value = userData
+        }
       }
     }
   }
@@ -38,6 +61,7 @@ export const useUserStore = defineStore('user', () => {
     user.value = null
     token.value = null
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
   }
 
   return {

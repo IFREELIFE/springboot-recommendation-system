@@ -82,10 +82,12 @@ const handleSubmit = async () => {
       loading.value = true
       try {
         const user = await authService.login(form)
-        userStore.setToken(user.token)
+        // 先设置用户信息和token
         userStore.setUser(user)
+        userStore.setToken(user.token)
         ElMessage.success('登录成功！')
-        router.push('/')
+        // 使用 nextTick 确保状态更新后再导航
+        await router.push('/')
       } catch (error) {
         ElMessage.error(error.message || '登录失败，请检查用户名和密码')
       } finally {
