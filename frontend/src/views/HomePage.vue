@@ -9,7 +9,7 @@
 
     <div class="section">
       <h2>
-        <el-icon color="#f56c6c"><Hot /></el-icon>
+        <el-icon color="#f56c6c"><TrendCharts /></el-icon>
         热门房源
       </h2>
       <el-row :gutter="16" v-loading="loading">
@@ -49,7 +49,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Hot, StarFilled } from '@element-plus/icons-vue'
+import { TrendCharts, StarFilled } from '@element-plus/icons-vue'
 import PropertyCard from '../components/PropertyCard.vue'
 import propertyService from '../services/propertyService'
 
