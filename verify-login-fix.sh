@@ -9,7 +9,8 @@ echo "=========================================="
 echo ""
 
 echo "1. 检查代码编译 / Checking code compilation..."
-cd /home/runner/work/springboot-recommendation-system/springboot-recommendation-system
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 mvn clean compile -DskipTests -q
 
 if [ $? -eq 0 ]; then

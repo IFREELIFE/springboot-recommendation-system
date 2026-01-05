@@ -75,14 +75,16 @@ public class JwtTokenProvider {
         String email = claims.get("email", String.class);
         String role = claims.get("role", String.class);
 
-        logger.debug("Creating UserDetails from JWT token for userId: {}, username: {}", userId, username);
+        logger.debug("Creating UserDetails from JWT token for userId: {}", userId);
         
         // Create UserPrincipal from JWT claims without database lookup
+        // Note: Empty password is safe here as this UserDetails is only used for authorization,
+        // not authentication. The JWT signature verification already validates the user's identity.
         return new UserPrincipal(
                 userId,
                 username,
                 email,
-                "",  // Password not needed for authentication from token
+                "",  // Password not needed - JWT signature already verified user identity
                 Collections.singleton(new SimpleGrantedAuthority(role))
         );
     }

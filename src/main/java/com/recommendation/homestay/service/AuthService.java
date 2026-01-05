@@ -99,7 +99,7 @@ public class AuthService {
                 userPrincipal.getAuthorities().iterator().next().getAuthority()
             );
         } catch (Exception e) {
-            logger.error("Login failed for user: {}, error: {}", request.getUsername(), e.getMessage());
+            logger.error("Login failed for userId or username, error: {}", e.getMessage());
             throw e;
         }
     }
