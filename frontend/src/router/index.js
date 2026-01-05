@@ -61,8 +61,12 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   
+  // 如果目标路由需要认证但用户未登录，重定向到登录页
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {
     next({ name: 'Login' })
+  } else if (to.name === 'Login' && userStore.isAuthenticated) {
+    // 如果用户已登录且尝试访问登录页，重定向到首页
+    next({ name: 'Home' })
   } else {
     next()
   }
