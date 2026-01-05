@@ -11,7 +11,7 @@ const authService = {
     if (response.data.success) {
       const { token, id, username, email, role } = response.data.data
       localStorage.setItem('token', token)
-      return { id, username, email, role }
+      return { id, username, email, role, token }
     }
     throw new Error(response.data.message)
   },

@@ -82,8 +82,8 @@ const handleSubmit = async () => {
       loading.value = true
       try {
         const user = await authService.login(form)
+        userStore.setToken(user.token)
         userStore.setUser(user)
-        userStore.setToken(user.token || localStorage.getItem('token'))
         ElMessage.success('登录成功！')
         router.push('/')
       } catch (error) {
