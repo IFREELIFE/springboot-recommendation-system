@@ -18,6 +18,10 @@ public interface UserPropertyInteractionRepository extends JpaRepository<UserPro
            "ORDER BY i.createdAt DESC")
     List<UserPropertyInteraction> findRecentInteractionsByUser(@Param("userId") Long userId);
 
-    @Query("SELECT i.property.id, COUNT(i) FROM com.recommendation.homestay.entity.UserPropertyInteraction i WHERE i.user.id = :userId GROUP BY i.property.id ORDER BY COUNT(i) DESC")
+    @Query("SELECT i.property.id, COUNT(i) AS interactionCount " +
+            "FROM UserPropertyInteraction i " +
+            "WHERE i.user.id = :userId " +
+            "GROUP BY i.property.id " +
+            "ORDER BY interactionCount DESC")
     List<Object[]> findMostInteractedProperties(@Param("userId") Long userId);
 }
