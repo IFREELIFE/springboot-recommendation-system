@@ -20,11 +20,17 @@ public class PageResponse<T> {
     private long pages;         // 总页数
 
     // Keep legacy field names (content/totalElements) for frontend compatibility
+    /**
+     * Legacy alias for records to keep frontend responses backward compatible.
+     */
     @JsonProperty("content")
     public List<T> getContent() {
         return records;
     }
 
+    /**
+     * Legacy alias for total to keep frontend responses backward compatible.
+     */
     @JsonProperty("totalElements")
     public long getTotalElements() {
         return total;
