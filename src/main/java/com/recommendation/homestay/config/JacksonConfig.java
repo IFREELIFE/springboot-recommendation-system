@@ -5,14 +5,14 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class JacksonConfig {
 
     @Bean
-    public MappingJackson2HttpMessageConverter jackson2HttpMessageConverter() {
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+    @Primary
+    public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         
         // Register Hibernate5Module to handle Hibernate proxy objects
@@ -24,7 +24,6 @@ public class JacksonConfig {
         // Disable FAIL_ON_EMPTY_BEANS to avoid errors when serializing empty objects
         objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         
-        converter.setObjectMapper(objectMapper);
-        return converter;
+        return objectMapper;
     }
 }
