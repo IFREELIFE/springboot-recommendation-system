@@ -1,26 +1,28 @@
 package com.recommendation.homestay.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class JacksonConfig {
 
     @Bean
-    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
-        ObjectMapper objectMapper = builder.createXmlMapper(false).build();
+    @Primary
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
         
-        // Register Hibernate5Module to handle lazy-loaded entities properly
-        Hibernate5Module hibernate5Module = new Hibernate5Module();
-        // Disable forcing lazy loading to avoid triggering lazy initialization during serialization
-        hibernate5Module.configure(Hibernate5Module.Feature.FORCE_LAZY_LOADING, false);
-        // Serialize identifier for not-loaded lazy associations instead of null
-        hibernate5Module.configure(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS, true);
+        // Register Hibernate5Module to handle Hibernate proxy objects
+        Hibernate5Module hibernateModule = new Hibernate5Module();
+        // Enable: serialize identifier for lazy not loaded objects (avoids null values)
+        hibernateModule.enable(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS);
+        objectMapper.registerModule(hibernateModule);
         
-        objectMapper.registerModule(hibernate5Module);
+        // Disable FAIL_ON_EMPTY_BEANS to avoid errors when serializing empty objects
+        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         
         return objectMapper;
     }
