@@ -28,11 +28,21 @@ public class PageResponse<T> {
         return records;
     }
 
+    @JsonIgnore
+    public List<T> getRecords() {
+        return records;
+    }
+
     /**
      * Legacy alias for total to keep frontend responses backward compatible.
      */
     @JsonProperty("totalElements")
     public long getTotalElements() {
+        return total;
+    }
+
+    @JsonIgnore
+    public long getTotal() {
         return total;
     }
 
