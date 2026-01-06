@@ -1,43 +1,36 @@
 package com.recommendation.homestay.entity;
 
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "user_property_interactions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
+@TableName("user_property_interactions")
 public class UserPropertyInteraction {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    private Long userId;
+
+    @TableField(exist = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "property_id", nullable = false)
+    private Long propertyId;
+
+    @TableField(exist = false)
     private Property property;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
     private InteractionType type;
 
-    @Column
     private Integer rating; // 1-5 for rating interactions
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
     public enum InteractionType {

@@ -1,10 +1,11 @@
 package com.recommendation.homestay.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.recommendation.homestay.dto.JwtResponse;
 import com.recommendation.homestay.dto.LoginRequest;
 import com.recommendation.homestay.dto.RegisterRequest;
 import com.recommendation.homestay.entity.User;
-import com.recommendation.homestay.repository.UserRepository;
+import com.recommendation.homestay.mapper.UserMapper;
 import com.recommendation.homestay.security.JwtTokenProvider;
 import com.recommendation.homestay.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserMapper userMapper;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -33,11 +34,15 @@ public class AuthService {
 
     @Transactional
     public User registerUser(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
+        QueryWrapper<User> usernameQuery = new QueryWrapper<>();
+        usernameQuery.eq("username", request.getUsername());
+        if (userMapper.selectCount(usernameQuery) > 0) {
             throw new RuntimeException("Username already exists");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        QueryWrapper<User> emailQuery = new QueryWrapper<>();
+        emailQuery.eq("email", request.getEmail());
+        if (userMapper.selectCount(emailQuery) > 0) {
             throw new RuntimeException("Email already exists");
         }
 
@@ -59,7 +64,8 @@ public class AuthService {
         
         user.setEnabled(true);
 
-        return userRepository.save(user);
+        userMapper.insert(user);
+        return user;
     }
 
     public JwtResponse loginUser(LoginRequest request) {

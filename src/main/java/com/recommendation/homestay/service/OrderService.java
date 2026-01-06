@@ -4,12 +4,12 @@ import com.recommendation.homestay.dto.OrderRequest;
 import com.recommendation.homestay.entity.Order;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.entity.User;
-import com.recommendation.homestay.repository.OrderRepository;
-import com.recommendation.homestay.repository.PropertyRepository;
-import com.recommendation.homestay.repository.UserRepository;
+import com.recommendation.homestay.mapper.OrderRepository;
+import com.recommendation.homestay.mapper.PropertyRepository;
+import com.recommendation.homestay.mapper.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,13 +22,13 @@ import java.util.UUID;
 public class OrderService {
 
     @Autowired
-    private OrderRepository orderRepository;
+    private OrderMapper orderRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserMapper userRepository;
 
     @Autowired
-    private PropertyRepository propertyRepository;
+    private PropertyMapper propertyRepository;
 
     @Transactional
     public Order createOrder(OrderRequest request, Long userId) {
