@@ -128,6 +128,7 @@ public class OrderService {
             }
         });
         if (!propertyIds.isEmpty()) {
+            // propertyIds 已经去重且分页限制条目数，merge函数仅作防御
             Map<Long, Property> propertyMap = propertyMapper.selectBatchIds(propertyIds)
                     .stream()
                     .filter(Objects::nonNull)

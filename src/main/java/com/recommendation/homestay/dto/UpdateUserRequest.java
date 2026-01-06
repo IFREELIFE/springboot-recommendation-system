@@ -11,7 +11,7 @@ public class UpdateUserRequest {
     @Email(message = "Email must be valid")
     private String email;
 
-    @Pattern(regexp = "^\\+?[0-9]{6,20}$", message = "Phone number format is invalid")
+    @Pattern(regexp = "^\\+?[0-9\\s\\-]{6,20}$", message = "Phone number format is invalid")
     private String phone;
 
     private String avatar;
