@@ -16,7 +16,7 @@ public class PageResponse<T> {
     private long current;       // 当前页（从0/1开始，和前端保持一致）
     private long pages;         // 总页数
 
-    // 兼容前端旧字段（content/totalElements）
+    // Keep legacy field names (content/totalElements) for frontend compatibility
     @JsonProperty("content")
     public List<T> getContent() {
         return records;
