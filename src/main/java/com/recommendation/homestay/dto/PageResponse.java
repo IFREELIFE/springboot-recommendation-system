@@ -1,5 +1,6 @@
 package com.recommendation.homestay.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.util.List;
 
@@ -14,6 +15,17 @@ public class PageResponse<T> {
     private long size;          // 每页条数
     private long current;       // 当前页（从0/1开始，和前端保持一致）
     private long pages;         // 总页数
+
+    // 兼容前端旧字段（content/totalElements）
+    @JsonProperty("content")
+    public List<T> getContent() {
+        return records;
+    }
+
+    @JsonProperty("totalElements")
+    public long getTotalElements() {
+        return total;
+    }
 
     // 从MyBatis-Plus的IPage转换为自定义DTO
     public static <T> PageResponse<T> fromIPage(com.baomidou.mybatisplus.core.metadata.IPage<T> iPage) {
