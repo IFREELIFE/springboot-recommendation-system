@@ -100,6 +100,7 @@
             :file-list="fileList"
             :on-change="handleFileChange"
             :on-remove="handleFileChange"
+            accept="image/*"
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">将图片拖到此处，或<em>点击上传</em></div>

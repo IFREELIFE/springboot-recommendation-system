@@ -24,8 +24,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -38,6 +41,9 @@ public class PropertyController {
 
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
+
+    private static final Set<String> ALLOWED_EXT = new HashSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".webp"));
+    private static final long MAX_SINGLE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -70,12 +76,22 @@ public class PropertyController {
                 if (file == null || file.isEmpty()) {
                     continue;
                 }
+                if (file.getSize() > MAX_SINGLE_FILE_SIZE) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "单个文件大小不能超过10MB"));
+                }
+                if (file.getContentType() == null || !file.getContentType().toLowerCase().startsWith("image/")) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "仅支持图片文件上传"));
+                }
                 String originalFilename = StringUtils.cleanPath(
                         file.getOriginalFilename() == null ? "" : file.getOriginalFilename());
                 String extension = "";
                 int dotIndex = originalFilename.lastIndexOf('.');
                 if (dotIndex != -1) {
                     extension = originalFilename.substring(dotIndex);
+                }
+                String lowerExt = extension.toLowerCase();
+                if (!ALLOWED_EXT.contains(lowerExt)) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "不支持的图片格式"));
                 }
                 String filename = UUID.randomUUID().toString().replace("-", "") + extension;
                 Path targetLocation = uploadPath.resolve(filename);
