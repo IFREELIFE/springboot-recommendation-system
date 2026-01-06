@@ -109,7 +109,8 @@ public class PropertyController {
             @RequestParam(defaultValue = "10") int size) {
         try {
             IPage<Property> properties = propertyService.getPropertiesByLandlord(currentUser.getId(), page, size);
-            return ResponseEntity.ok(new ApiResponse(true, "Properties retrieved successfully", properties));
+            PageResponse<Property> pageResponse = PageResponse.fromIPage(properties);
+            return ResponseEntity.ok(new ApiResponse(true, "Properties retrieved successfully", pageResponse));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
