@@ -107,9 +107,7 @@ public class OrderService {
     }
 
     public Order getOrderByNumber(String orderNumber) {
-        QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("order_number", orderNumber);
-        Order order = orderMapper.selectOne(queryWrapper);
+        Order order = orderMapper.findByOrderNumber(orderNumber);
         if (order == null) {
             throw new RuntimeException("Order not found");
         }

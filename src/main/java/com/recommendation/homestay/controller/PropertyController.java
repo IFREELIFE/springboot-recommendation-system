@@ -1,15 +1,12 @@
 package com.recommendation.homestay.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.PropertyRequest;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.PropertyService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -91,10 +88,8 @@ public class PropertyController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir) {
         try {
-            Sort sort = sortDir.equalsIgnoreCase("ASC") ? 
-                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
-            Page<Property> properties = propertyService.getAllProperties(pageable);
+            // MyBatis-Plus IPage pagination - sortBy and sortDir can be added to QueryWrapper in service if needed
+            IPage<Property> properties = propertyService.getAllProperties(page, size);
             return ResponseEntity.ok(new ApiResponse(true, "Properties retrieved successfully", properties));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -109,8 +104,7 @@ public class PropertyController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-            Page<Property> properties = propertyService.getPropertiesByLandlord(currentUser.getId(), pageable);
+            IPage<Property> properties = propertyService.getPropertiesByLandlord(currentUser.getId(), page, size);
             return ResponseEntity.ok(new ApiResponse(true, "Properties retrieved successfully", properties));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -127,9 +121,8 @@ public class PropertyController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Property> properties = propertyService.searchProperties(
-                    city, minPrice, maxPrice, bedrooms, pageable);
+            IPage<Property> properties = propertyService.searchProperties(
+                    city, minPrice, maxPrice, bedrooms, page, size);
             return ResponseEntity.ok(new ApiResponse(true, "Search results retrieved successfully", properties));
         } catch (Exception e) {
             return ResponseEntity.badRequest()

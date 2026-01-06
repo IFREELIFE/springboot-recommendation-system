@@ -149,29 +149,19 @@ public class PropertyService {
 
     @Cacheable(value = "popularProperties")
     public List<Property> getPopularProperties() {
-        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("available", true)
-                    .orderByDesc("booking_count")
-                    .last("LIMIT 10");
-        return propertyMapper.selectList(queryWrapper);
+        return propertyMapper.findTop10ByAvailableTrueOrderByBookingCountDesc();
     }
 
     @Cacheable(value = "topRatedProperties")
     public List<Property> getTopRatedProperties() {
-        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("available", true)
-                    .orderByDesc("rating")
-                    .last("LIMIT 10");
-        return propertyMapper.selectList(queryWrapper);
+        return propertyMapper.findTop10ByAvailableTrueOrderByRatingDesc();
     }
 
     @Transactional
     public void incrementViewCount(Long propertyId) {
-        Property property = propertyMapper.selectById(propertyId);
-        if (property == null) {
+        int result = propertyMapper.incrementViewCount(propertyId);
+        if (result == 0) {
             throw new RuntimeException("Property not found");
         }
-        property.setViewCount(property.getViewCount() + 1);
-        propertyMapper.updateById(property);
     }
 }
