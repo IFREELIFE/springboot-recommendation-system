@@ -23,13 +23,14 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import javax.imageio.ImageIO;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -84,6 +85,9 @@ public class PropertyController {
                 }
                 String originalFilename = StringUtils.cleanPath(
                         file.getOriginalFilename() == null ? "" : file.getOriginalFilename());
+                if (originalFilename.isEmpty()) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "文件名无效"));
+                }
                 String extension = "";
                 int dotIndex = originalFilename.lastIndexOf('.');
                 if (dotIndex != -1) {
@@ -93,9 +97,21 @@ public class PropertyController {
                 if (!ALLOWED_EXT.contains(lowerExt)) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "不支持的图片格式"));
                 }
+                // 简单魔数校验
+                if (ImageIO.read(file.getInputStream()) == null) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "文件内容不是有效图片"));
+                }
+
                 String filename = UUID.randomUUID().toString().replace("-", "") + extension;
-                Path targetLocation = uploadPath.resolve(filename);
-                Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+                Path targetLocation = uploadPath.resolve(filename).normalize();
+                if (!targetLocation.startsWith(uploadPath)) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "非法的文件路径"));
+                }
+                while (Files.exists(targetLocation)) {
+                    filename = UUID.randomUUID().toString().replace("-", "") + extension;
+                    targetLocation = uploadPath.resolve(filename).normalize();
+                }
+                Files.write(targetLocation, file.getBytes(), StandardOpenOption.CREATE_NEW);
                 imageUrls.add("/api/uploads/" + filename);
             }
 

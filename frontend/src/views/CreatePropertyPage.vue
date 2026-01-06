@@ -188,7 +188,9 @@ const uploadImages = async () => {
   }
   uploading.value = true
   try {
-    const files = fileList.value.map((item) => item.raw || item)
+    const files = fileList.value
+      .map((item) => item.raw || item)
+      .filter((f) => f instanceof File)
     const response = await propertyService.uploadImages(files)
     if (response.success) {
       uploadedImages.value = response.data
