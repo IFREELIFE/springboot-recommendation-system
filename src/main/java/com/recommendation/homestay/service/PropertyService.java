@@ -107,7 +107,6 @@ public class PropertyService {
         return property;
     }
 
-    @Cacheable(value = "properties", key = "'all-' + #page + '-' + #size")
     public IPage<Property> getAllProperties(int page, int size) {
         Page<Property> pageParam = new Page<>(page + 1, size);
         QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
