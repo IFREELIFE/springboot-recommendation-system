@@ -42,6 +42,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="my-orders">我的订单</el-dropdown-item>
+                <el-dropdown-item command="profile">个人信息</el-dropdown-item>
                 <el-dropdown-item v-if="userStore.isLandlord" command="my-properties">
                   我的房源
                 </el-dropdown-item>
@@ -81,6 +82,8 @@ const handleCommand = (command) => {
     router.push('/login')
   } else if (command === 'my-orders') {
     router.push('/my-orders')
+  } else if (command === 'profile') {
+    router.push('/profile')
   } else if (command === 'my-properties') {
     router.push('/my-properties')
   }
