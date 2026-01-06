@@ -46,6 +46,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/ProfilePage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/create-property',
     name: 'CreateProperty',
     component: () => import('../views/CreatePropertyPage.vue'),
