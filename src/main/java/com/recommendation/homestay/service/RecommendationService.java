@@ -1,11 +1,12 @@
 package com.recommendation.homestay.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.entity.UserPropertyInteraction;
-import com.recommendation.homestay.repository.PropertyRepository;
-import com.recommendation.homestay.repository.UserPropertyInteractionRepository;
-import com.recommendation.homestay.repository.UserRepository;
+import com.recommendation.homestay.mapper.PropertyMapper;
+import com.recommendation.homestay.mapper.UserPropertyInteractionMapper;
+import com.recommendation.homestay.mapper.UserMapper;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +20,13 @@ import java.util.stream.Collectors;
 public class RecommendationService {
 
     @Autowired
-    private PropertyRepository propertyRepository;
+    private PropertyMapper propertyMapper;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserMapper userMapper;
 
     @Autowired
-    private UserPropertyInteractionRepository interactionRepository;
+    private UserPropertyInteractionMapper interactionMapper;
 
     /**
      * Hybrid recommendation: Combines collaborative filtering and content-based filtering

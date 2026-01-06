@@ -1,15 +1,16 @@
 package com.recommendation.homestay.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.recommendation.homestay.dto.OrderRequest;
 import com.recommendation.homestay.entity.Order;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.entity.User;
-import com.recommendation.homestay.mapper.OrderRepository;
-import com.recommendation.homestay.mapper.PropertyRepository;
-import com.recommendation.homestay.mapper.UserRepository;
+import com.recommendation.homestay.mapper.OrderMapper;
+import com.recommendation.homestay.mapper.PropertyMapper;
+import com.recommendation.homestay.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,21 +23,25 @@ import java.util.UUID;
 public class OrderService {
 
     @Autowired
-    private OrderMapper orderRepository;
+    private OrderMapper orderMapper;
 
     @Autowired
-    private UserMapper userRepository;
+    private UserMapper userMapper;
 
     @Autowired
-    private PropertyMapper propertyRepository;
+    private PropertyMapper propertyMapper;
 
     @Transactional
     public Order createOrder(OrderRequest request, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
 
-        Property property = propertyRepository.findById(request.getPropertyId())
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+        Property property = propertyMapper.selectById(request.getPropertyId());
+        if (property == null) {
+            throw new RuntimeException("Property not found");
+        }
 
         if (!property.getAvailable()) {
             throw new RuntimeException("Property is not available");
@@ -59,8 +64,8 @@ public class OrderService {
 
         Order order = new Order();
         order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        order.setUser(user);
-        order.setProperty(property);
+        order.setUserId(userId);
+        order.setPropertyId(property.getId());
         order.setCheckInDate(request.getCheckInDate());
         order.setCheckOutDate(request.getCheckOutDate());
         order.setGuestCount(request.getGuestCount());
@@ -68,71 +73,72 @@ public class OrderService {
         order.setStatus(Order.OrderStatus.PENDING);
         order.setRemarks(request.getRemarks());
 
-        Order savedOrder = orderRepository.save(order);
+        orderMapper.insert(order);
 
         // Update property booking count
         property.setBookingCount(property.getBookingCount() + 1);
-        propertyRepository.save(property);
-
-        return savedOrder;
-    }
-
-    public Order getOrderById(Long orderId, Long userId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Unauthorized to view this order");
-        }
+        propertyMapper.updateById(property);
 
         return order;
-    }
-
-    public Order getOrderByOrderNumber(String orderNumber, Long userId) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Unauthorized to view this order");
-        }
-
-        return order;
-    }
-
-    public Page<Order> getUserOrders(Long userId, Pageable pageable) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return orderRepository.findByUserOrderByCreatedAtDesc(user, pageable);
     }
 
     @Transactional
     public Order updateOrderStatus(Long orderId, Order.OrderStatus status, Long userId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new RuntimeException("Order not found");
+        }
 
-        if (!order.getUser().getId().equals(userId) && 
-            !order.getProperty().getLandlord().getId().equals(userId)) {
+        if (!order.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized to update this order");
         }
 
         order.setStatus(status);
-        return orderRepository.save(order);
+        orderMapper.updateById(order);
+        return order;
+    }
+
+    public Order getOrderById(Long orderId) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new RuntimeException("Order not found");
+        }
+        return order;
+    }
+
+    public Order getOrderByNumber(String orderNumber) {
+        QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("order_number", orderNumber);
+        Order order = orderMapper.selectOne(queryWrapper);
+        if (order == null) {
+            throw new RuntimeException("Order not found");
+        }
+        return order;
+    }
+
+    public IPage<Order> getUserOrders(Long userId, int page, int size) {
+        Page<Order> pageParam = new Page<>(page + 1, size);
+        QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId).orderByDesc("created_at");
+        return orderMapper.selectPage(pageParam, queryWrapper);
     }
 
     @Transactional
     public void cancelOrder(Long orderId, Long userId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new RuntimeException("Order not found");
+        }
 
-        if (!order.getUser().getId().equals(userId)) {
+        if (!order.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized to cancel this order");
         }
 
-        if (order.getStatus() == Order.OrderStatus.COMPLETED) {
-            throw new RuntimeException("Cannot cancel completed order");
+        if (order.getStatus() != Order.OrderStatus.PENDING) {
+            throw new RuntimeException("Can only cancel pending orders");
         }
 
         order.setStatus(Order.OrderStatus.CANCELLED);
-        orderRepository.save(order);
+        orderMapper.updateById(order);
     }
 }
