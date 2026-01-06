@@ -4,7 +4,6 @@
       <el-col :md="24" :xs="24">
         <div class="orders-header">
           <h2>我的订单</h2>
-          <el-button type="primary" @click="goToProfile">修改个人信息</el-button>
         </div>
         <el-table :data="orders" v-loading="loading" stripe>
           <el-table-column prop="orderNumber" label="订单号" width="150" />
@@ -76,12 +75,10 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import orderService from '../services/orderService'
 
-const router = useRouter()
 const orders = ref([])
 const loading = ref(false)
 
@@ -160,17 +157,12 @@ const getStatusText = (status) => {
   }
   return map[status] || status
 }
-
-const goToProfile = () => {
-  router.push('/profile')
-}
 </script>
 
 <style scoped>
 .orders-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-end;
   margin-bottom: 16px;
 }
 </style>
