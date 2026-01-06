@@ -95,12 +95,12 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Jackson Datatype Hibernate5 for proper Hibernate proxy serialization -->
+
+        <!-- 处理Java 8时间类型的Jackson扩展（省略版本号，由Spring Boot自动适配） -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-hibernate5</artifactId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
-
         <!-- Apache Commons Math for Collaborative Filtering -->
         <dependency>
             <groupId>org.apache.commons</groupId>

@@ -8,7 +8,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.http.SessionCreationPolicy; // 新增导入
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,7 +22,6 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // 构造方法注入你的定制 UserDetailsService 和 JWT 过滤器
     public SecurityConfig(CustomUserDetailsService customUserDetailsService, JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.customUserDetailsService = customUserDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -30,25 +29,28 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // 配置 Spring Security
         http
-                .cors()  // 启用 CORS
+                .cors().and()  // 启用 CORS
+                .csrf().disable()  // 禁用 CSRF（JWT 场景无需）
+                // 新增：配置无状态会话（核心补充）
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .csrf().disable()  // 禁用 CSRF 防护（适合 REST API 和 JWT）
+                // 权限规则（原有正确配置保留）
                 .authorizeRequests()
-                .antMatchers("/api/auth/**").permitAll()  // 公共接口（注册、登录）
-                .antMatchers(HttpMethod.GET, "/api/properties/**").permitAll()  // GET 请求允许
+                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/search/**").permitAll()
-                .anyRequest().authenticated()  // 其他请求需要认证
+                .anyRequest().authenticated()
                 .and()
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);  // 添加 JWT 验证过滤器
+                // JWT 过滤器（原有正确配置保留）
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        // 配置 AuthenticationManager，关联自定义的 UserDetailsService 和 PasswordEncoder
         return http.getSharedObject(AuthenticationManagerBuilder.class)
                 .userDetailsService(customUserDetailsService)
                 .passwordEncoder(passwordEncoder())
@@ -58,6 +60,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // 使用 BCrypt 进行密码加密
+        return new BCryptPasswordEncoder();
     }
 }
