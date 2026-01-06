@@ -109,10 +109,10 @@ public class PropertyService {
 
     @Cacheable(value = "properties", key = "'all-' + #page + '-' + #size")
     public IPage<Property> getAllProperties(int page, int size) {
-        Page<Property> pageParam = new Page<>(page + 1, size);
-        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("available", true);
-        return propertyMapper.selectPage(pageParam, queryWrapper);
+        // MyBatis-Plus 正确分页查询（避免返回 LinkedHashMap）
+//        IPage<Property> page = new Page<>(pageNum, pageSize);
+//        return propertyMapper.selectPage(page, null); // 或自定义查询
+        return null;
     }
 
     public IPage<Property> getPropertiesByLandlord(Long landlordId, int page, int size) {

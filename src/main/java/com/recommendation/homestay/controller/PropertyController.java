@@ -2,11 +2,18 @@ package com.recommendation.homestay.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.recommendation.homestay.dto.ApiResponse;
+import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyRequest;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.PropertyService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +27,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/properties")
 @CrossOrigin(origins = "*", maxAge = 3600)
+@Slf4j
 public class PropertyController {
 
     @Autowired
@@ -86,14 +94,26 @@ public class PropertyController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDir) {
+            @RequestParam(defaultValue = "DESC") String sortDir,
+            // 临时添加：接收city参数（即使不用，先捕获它，避免参数解析异常）
+            @RequestParam(required = false) String city) {
+
+        // 打印所有接收的参数（含city），确认请求参数是否正确传递
+        log.info("接收到请求参数：page={}, size={}, sortBy={}, sortDir={}, city={}",
+                page, size, sortBy, sortDir, city);
+
         try {
-            // MyBatis-Plus IPage pagination - sortBy and sortDir can be added to QueryWrapper in service if needed
-            IPage<Property> properties = propertyService.getAllProperties(page, size);
+            Sort sort = sortDir.equalsIgnoreCase("ASC") ?
+                    Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<Property> properties = (Page)propertyService.getAllProperties(pageable.getPageNumber(), pageable.getPageSize());
+            log.info("接口正常返回，数据条数：{}", properties.getTotalElements());
             return ResponseEntity.ok(new ApiResponse(true, "Properties retrieved successfully", properties));
         } catch (Exception e) {
+            // 关键：打印完整异常栈，定位强转代码行
+            log.error("获取房源列表失败", e);
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, e.getMessage()));
+                    .body(new ApiResponse(false, "获取房源失败：" + e.getMessage()));
         }
     }
 
@@ -112,6 +132,7 @@ public class PropertyController {
         }
     }
 
+    // 确保searchProperties也返回PageResponse（而非IPage）
     @GetMapping("/search")
     public ResponseEntity<?> searchProperties(
             @RequestParam(required = false) String city,
@@ -123,10 +144,10 @@ public class PropertyController {
         try {
             IPage<Property> properties = propertyService.searchProperties(
                     city, minPrice, maxPrice, bedrooms, page, size);
-            return ResponseEntity.ok(new ApiResponse(true, "Search results retrieved successfully", properties));
+            PageResponse<Property> pageResponse = PageResponse.fromIPage(properties);
+            return ResponseEntity.ok(new ApiResponse(true, "Success", pageResponse));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, e.getMessage()));
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }
     }
 

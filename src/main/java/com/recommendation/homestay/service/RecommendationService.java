@@ -142,25 +142,29 @@ public class RecommendationService {
     }
 
     /**
-     * Content-Based Filtering: Recommend properties similar to what user has liked
+     * 基于内容的推荐：推荐与用户喜欢的房源相似的房源
      */
     public List<Property> getContentBasedRecommendations(Long userId, int limit) {
+        // 1. 查询用户的房源交互记录
         QueryWrapper<UserPropertyInteraction> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId);
         List<UserPropertyInteraction> userInteractions = interactionMapper.selectList(queryWrapper);
 
+        // 冷启动：无交互记录时返回评分最高的可用房源
         if (userInteractions.isEmpty()) {
-            // Cold start: return top-rated properties
             return propertyMapper.findTop10ByAvailableTrueOrderByRatingDesc()
                     .stream().limit(limit).collect(Collectors.toList());
         }
 
-        // Load property details for interactions
+        // 2. 筛选用户"喜欢"的房源（收藏/预订/高评分）
         List<Property> likedProperties = new ArrayList<>();
         for (UserPropertyInteraction interaction : userInteractions) {
-            if (interaction.getType() == UserPropertyInteraction.InteractionType.FAVORITE || 
-                interaction.getType() == UserPropertyInteraction.InteractionType.BOOK ||
-                (interaction.getRating() != null && interaction.getRating() >= 4)) {
+            // 过滤正向交互行为
+            boolean isPositiveInteraction = interaction.getType() == UserPropertyInteraction.InteractionType.FAVORITE
+                    || interaction.getType() == UserPropertyInteraction.InteractionType.BOOK
+                    || (interaction.getRating() != null && interaction.getRating() >= 4);
+
+            if (isPositiveInteraction) {
                 Property property = propertyMapper.selectById(interaction.getPropertyId());
                 if (property != null) {
                     likedProperties.add(property);
@@ -168,81 +172,90 @@ public class RecommendationService {
             }
         }
 
+        // 无正向交互时仍返回高评分房源
         if (likedProperties.isEmpty()) {
             return propertyMapper.findTop10ByAvailableTrueOrderByRatingDesc()
                     .stream().limit(limit).collect(Collectors.toList());
         }
 
-        // Get user's preferences from liked properties
+        // 3. 提取用户偏好特征
         Map<String, Integer> cityPreferences = new HashMap<>();
         Map<String, Integer> typePreferences = new HashMap<>();
-        double avgPrice = 0;
-        int avgBedrooms = 0;
+        double totalPrice = 0.0;
+        int totalBedrooms = 0;
 
         for (Property property : likedProperties) {
+            // 城市偏好（计数）
             cityPreferences.merge(property.getCity(), 1, Integer::sum);
+            // 房源类型偏好（计数）
             if (property.getPropertyType() != null) {
                 typePreferences.merge(property.getPropertyType(), 1, Integer::sum);
             }
-            avgPrice += property.getPrice().doubleValue();
-            avgBedrooms += property.getBedrooms();
+            // 价格和卧室数累加（用于计算平均值）
+            totalPrice += property.getPrice().doubleValue();
+            totalBedrooms += property.getBedrooms();
         }
 
-        avgPrice /= likedProperties.size();
-        avgBedrooms /= likedProperties.size();
+        // 计算偏好的平均价格和平均卧室数
+        double avgPrice = totalPrice / likedProperties.size();
+        int avgBedrooms = totalBedrooms / likedProperties.size();
 
-        // Get all available properties
+        // 4. 查询所有可用房源
         QueryWrapper<Property> availableQuery = new QueryWrapper<>();
         availableQuery.eq("available", true);
         List<Property> allProperties = propertyMapper.selectList(availableQuery);
-        
-        // Filter out already interacted properties
+
+        // 过滤用户已交互过的房源（避免重复推荐）
         Set<Long> interactedIds = userInteractions.stream()
                 .map(UserPropertyInteraction::getPropertyId)
                 .collect(Collectors.toSet());
 
-        // Score properties based on similarity to user preferences
-        Map<Long, Double> scores = new HashMap<>();
+        // 5. 基于用户偏好为房源打分
+        Map<Long, Double> propertyScores = new HashMap<>();
         final double finalAvgPrice = avgPrice;
         final int finalAvgBedrooms = avgBedrooms;
 
         for (Property property : allProperties) {
-            if (interactedIds.contains(property.getId())) continue;
+            // 跳过已交互的房源
+            if (interactedIds.contains(property.getId())) {
+                continue;
+            }
 
             double score = 0.0;
 
-            // City preference (30%)
+            // 5.1 城市偏好得分（权重30%）
             if (cityPreferences.containsKey(property.getCity())) {
                 score += cityPreferences.get(property.getCity()) * 0.3;
             }
 
-            // Property type preference (20%)
+            // 5.2 房源类型偏好得分（权重20%）
             if (property.getPropertyType() != null && typePreferences.containsKey(property.getPropertyType())) {
                 score += typePreferences.get(property.getPropertyType()) * 0.2;
             }
 
-            // Price similarity (25%)
+            // 5.3 价格相似度得分（权重25%）：价格越接近用户偏好平均值，得分越高
             double priceDiff = Math.abs(property.getPrice().doubleValue() - finalAvgPrice);
-            double priceScore = 1.0 / (1.0 + priceDiff / finalAvgPrice);
-            score += priceScore * 0.25;
+            double priceSimilarity = 1.0 / (1.0 + priceDiff / finalAvgPrice); // 归一化到0-1
+            score += priceSimilarity * 0.25;
 
-            // Bedroom similarity (15%)
+            // 5.4 卧室数相似度得分（权重15%）：卧室数越接近偏好值，得分越高
             int bedroomDiff = Math.abs(property.getBedrooms() - finalAvgBedrooms);
-            double bedroomScore = 1.0 / (1.0 + bedroomDiff);
-            score += bedroomScore * 0.15;
+            double bedroomSimilarity = 1.0 / (1.0 + bedroomDiff); // 归一化到0-1
+            score += bedroomSimilarity * 0.15;
 
-            // Rating bonus (10%)
-            score += property.getRating().doubleValue() / 5.0 * 0.1;
+            // 5.5 房源评分加分（权重10%）：满分5分归一化到0-1
+            score += (property.getRating().doubleValue() / 5.0) * 0.1;
 
-            scores.put(property.getId(), score);
+            // 存入房源ID和对应得分
+            propertyScores.put(property.getId(), score);
         }
 
-        // Return top scored properties
-        return scores.entrySet().stream()
-                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+        // 6. 按得分降序排序，取前N个返回
+        return propertyScores.entrySet().stream()
+                .sorted((entry1, entry2) -> Double.compare(entry2.getValue(), entry1.getValue())) // 降序排序
                 .limit(limit)
-                .map(entry -> propertyMapper.selectById(entry.getKey()))
-                .filter(Objects::nonNull)
+                .map(entry -> propertyMapper.selectById(entry.getKey())) // 用Mapper查询房源详情
+                .filter(Objects::nonNull) // 过滤空值（避免已删除的房源）
                 .collect(Collectors.toList());
     }
 
