@@ -1,8 +1,15 @@
 <template>
   <div class="my-orders-page">
-    <el-row :gutter="20">
+    <el-row :gutter="20" class="section-title-row">
       <el-col :md="16" :xs="24">
         <h2>我的订单</h2>
+      </el-col>
+      <el-col :md="8" :xs="24" class="text-right">
+        <h2>修改信息</h2>
+      </el-col>
+    </el-row>
+    <el-row :gutter="20">
+      <el-col :md="16" :xs="24">
         <el-table :data="orders" v-loading="loading" stripe>
           <el-table-column prop="orderNumber" label="订单号" width="150" />
           <el-table-column label="房源名称">
@@ -69,7 +76,7 @@
       </el-col>
       <el-col :md="8" :xs="24">
         <el-card>
-          <template #header>个人信息</template>
+          <template #header>修改信息</template>
           <el-form :model="profileForm" label-width="90px">
             <el-form-item label="账号">
               <el-input v-model="profileForm.username" disabled />
@@ -240,3 +247,13 @@ const getStatusText = (status) => {
   return map[status] || status
 }
 </script>
+
+<style scoped>
+.section-title-row {
+  margin-bottom: 12px;
+}
+
+.text-right {
+  text-align: right;
+}
+</style>
