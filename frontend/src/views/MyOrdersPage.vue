@@ -1,8 +1,11 @@
 <template>
   <div class="my-orders-page">
     <el-row :gutter="20">
-      <el-col :md="16" :xs="24">
-        <h2>我的订单</h2>
+      <el-col :md="24" :xs="24">
+        <div class="orders-header">
+          <h2>我的订单</h2>
+          <el-button type="primary" @click="goToProfile">修改个人信息</el-button>
+        </div>
         <el-table :data="orders" v-loading="loading" stripe>
           <el-table-column prop="orderNumber" label="订单号" width="150" />
           <el-table-column label="房源名称">
@@ -67,49 +70,20 @@
           style="margin-top: 24px; text-align: center"
         />
       </el-col>
-      <el-col :md="8" :xs="24">
-        <el-card>
-          <template #header>个人信息</template>
-          <el-form :model="profileForm" label-width="90px">
-            <el-form-item label="账号">
-              <el-input v-model="profileForm.username" disabled />
-            </el-form-item>
-            <el-form-item label="邮箱">
-              <el-input v-model="profileForm.email" />
-            </el-form-item>
-            <el-form-item label="手机号">
-              <el-input v-model="profileForm.phone" />
-            </el-form-item>
-            <el-form-item label="头像链接">
-              <el-input v-model="profileForm.avatar" placeholder="http://..." />
-            </el-form-item>
-            <el-form-item label="新密码">
-              <el-input v-model="profileForm.password" type="password" show-password />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" :loading="savingProfile" @click="saveProfile">
-                保存信息
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
-      </el-col>
     </el-row>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 import orderService from '../services/orderService'
-import userService from '../services/userService'
-import { useUserStore } from '../store/user'
 
-const userStore = useUserStore()
+const router = useRouter()
 const orders = ref([])
 const loading = ref(false)
-const savingProfile = ref(false)
 
 const pagination = reactive({
   page: 1,
@@ -117,17 +91,8 @@ const pagination = reactive({
   total: 0
 })
 
-const profileForm = reactive({
-  username: '',
-  email: '',
-  phone: '',
-  avatar: '',
-  password: ''
-})
-
 onMounted(() => {
   fetchOrders()
-  fetchProfile()
 })
 
 const fetchOrders = async () => {
@@ -148,22 +113,6 @@ const fetchOrders = async () => {
   }
 }
 
-const fetchProfile = async () => {
-  try {
-    const response = await userService.getProfile()
-    if (response.success) {
-      Object.assign(profileForm, response.data, { password: '' })
-      userStore.setUser({
-        ...(userStore.user || {}),
-        ...response.data,
-        role: userStore.user?.role
-      })
-    }
-  } catch (error) {
-    ElMessage.error('获取个人信息失败')
-  }
-}
-
 const handleCancel = async (id) => {
   try {
     await ElMessageBox.confirm('确定取消这个订单吗？', '提示', {
@@ -181,34 +130,6 @@ const handleCancel = async (id) => {
     if (error !== 'cancel') {
       ElMessage.error(error.message || '取消失败')
     }
-  }
-}
-
-const saveProfile = async () => {
-  savingProfile.value = true
-  try {
-    const payload = {
-      email: profileForm.email,
-      phone: profileForm.phone,
-      avatar: profileForm.avatar
-    }
-    if (profileForm.password) {
-      payload.password = profileForm.password
-    }
-    const response = await userService.updateProfile(payload)
-    if (response.success) {
-      ElMessage.success('个人信息已更新')
-      Object.assign(profileForm, response.data, { password: '' })
-      userStore.setUser({
-        ...(userStore.user || {}),
-        ...response.data,
-        role: userStore.user?.role
-      })
-    }
-  } catch (error) {
-    ElMessage.error(error.message || '更新失败')
-  } finally {
-    savingProfile.value = false
   }
 }
 
@@ -239,4 +160,17 @@ const getStatusText = (status) => {
   }
   return map[status] || status
 }
+
+const goToProfile = () => {
+  router.push('/profile')
+}
 </script>
+
+<style scoped>
+.orders-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+</style>
