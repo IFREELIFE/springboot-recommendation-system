@@ -379,7 +379,7 @@ java -jar target/homestay-recommendation-1.0.0.jar
 - **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)**: 完整的 API 接口文档
 - **[ARCHITECTURE.md](ARCHITECTURE.md)**: 系统架构设计文档
 - **[DEPLOYMENT.md](DEPLOYMENT.md)**: 详细的部署指南
-- **[PROJECT_SUMMARY.txt](PROJECT_SUMMARY.txt)**: 项目完成总结
+- **[PROJECT_EVALUATION.md](PROJECT_EVALUATION.md)**: 项目整体评价与改进建议
 
 ## 许可证 (License)
 
