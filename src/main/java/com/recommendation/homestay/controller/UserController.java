@@ -48,7 +48,7 @@ public class UserController {
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             QueryWrapper<User> emailQuery = new QueryWrapper<>();
-            emailQuery.eq("email", request.getEmail());
+            emailQuery.eq("email", request.getEmail()).ne("id", user.getId());
             if (userMapper.selectCount(emailQuery) > 0) {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "Email already in use"));
             }

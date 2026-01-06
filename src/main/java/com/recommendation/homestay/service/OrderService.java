@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -119,10 +121,19 @@ public class OrderService {
         QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId).orderByDesc("created_at");
         IPage<Order> orders = orderMapper.selectPage(pageParam, queryWrapper);
+        Set<Long> propertyIds = new HashSet<>();
         orders.getRecords().forEach(order -> {
-            Property property = propertyMapper.selectById(order.getPropertyId());
-            order.setProperty(property);
+            if (order.getPropertyId() != null) {
+                propertyIds.add(order.getPropertyId());
+            }
         });
+        if (!propertyIds.isEmpty()) {
+            Map<Long, Property> propertyMap = propertyMapper.selectBatchIds(propertyIds)
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(Property::getId, Function.identity()));
+            orders.getRecords().forEach(order -> order.setProperty(propertyMap.get(order.getPropertyId())));
+        }
         return orders;
     }
 
