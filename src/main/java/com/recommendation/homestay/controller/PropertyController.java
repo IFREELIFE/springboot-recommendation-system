@@ -43,8 +43,10 @@ public class PropertyController {
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
+    @Value("${file.max-size-bytes:10485760}")
+    private long maxFileSize;
+
     private static final Set<String> ALLOWED_EXT = new HashSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".webp"));
-    private static final long MAX_SINGLE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -77,8 +79,8 @@ public class PropertyController {
                 if (file == null || file.isEmpty()) {
                     continue;
                 }
-                if (file.getSize() > MAX_SINGLE_FILE_SIZE) {
-                    return ResponseEntity.badRequest().body(new ApiResponse(false, "单个文件大小不能超过10MB"));
+                if (file.getSize() > maxFileSize) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "单个文件大小不能超过限制"));
                 }
                 if (file.getContentType() == null || !file.getContentType().toLowerCase().startsWith("image/")) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "仅支持图片文件上传"));
@@ -97,8 +99,9 @@ public class PropertyController {
                 if (!ALLOWED_EXT.contains(lowerExt)) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "不支持的图片格式"));
                 }
+                byte[] fileBytes = file.getBytes();
                 // 简单魔数校验
-                if (ImageIO.read(file.getInputStream()) == null) {
+                if (ImageIO.read(new java.io.ByteArrayInputStream(fileBytes)) == null) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "文件内容不是有效图片"));
                 }
 
@@ -107,11 +110,17 @@ public class PropertyController {
                 if (!targetLocation.startsWith(uploadPath)) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "非法的文件路径"));
                 }
-                while (Files.exists(targetLocation)) {
+                int retry = 0;
+                while (Files.exists(targetLocation) && retry < 5) {
                     filename = UUID.randomUUID().toString().replace("-", "") + extension;
                     targetLocation = uploadPath.resolve(filename).normalize();
+                    retry++;
                 }
-                Files.write(targetLocation, file.getBytes(), StandardOpenOption.CREATE_NEW);
+                if (Files.exists(targetLocation)) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(new ApiResponse(false, "生成文件名失败，请重试"));
+                }
+                Files.write(targetLocation, fileBytes, StandardOpenOption.CREATE_NEW);
                 imageUrls.add("/api/uploads/" + filename);
             }
 
