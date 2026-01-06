@@ -1,15 +1,16 @@
 package com.recommendation.homestay.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.recommendation.homestay.dto.PropertyRequest;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.entity.User;
-import com.recommendation.homestay.repository.PropertyRepository;
-import com.recommendation.homestay.repository.UserRepository;
+import com.recommendation.homestay.mapper.PropertyMapper;
+import com.recommendation.homestay.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,16 +21,18 @@ import java.util.List;
 public class PropertyService {
 
     @Autowired
-    private PropertyRepository propertyRepository;
+    private PropertyMapper propertyMapper;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserMapper userMapper;
 
     @Transactional
     @CacheEvict(value = "properties", allEntries = true)
     public Property createProperty(PropertyRequest request, Long landlordId) {
-        User landlord = userRepository.findById(landlordId)
-                .orElseThrow(() -> new RuntimeException("Landlord not found"));
+        User landlord = userMapper.selectById(landlordId);
+        if (landlord == null) {
+            throw new RuntimeException("Landlord not found");
+        }
 
         Property property = new Property();
         property.setTitle(request.getTitle());
@@ -44,19 +47,22 @@ public class PropertyService {
         property.setPropertyType(request.getPropertyType());
         property.setAmenities(request.getAmenities());
         property.setImages(request.getImages());
-        property.setLandlord(landlord);
+        property.setLandlordId(landlordId);
         property.setAvailable(true);
 
-        return propertyRepository.save(property);
+        propertyMapper.insert(property);
+        return property;
     }
 
     @Transactional
     @CacheEvict(value = "properties", allEntries = true)
     public Property updateProperty(Long propertyId, PropertyRequest request, Long landlordId) {
-        Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+        Property property = propertyMapper.selectById(propertyId);
+        if (property == null) {
+            throw new RuntimeException("Property not found");
+        }
 
-        if (!property.getLandlord().getId().equals(landlordId)) {
+        if (!property.getLandlordId().equals(landlordId)) {
             throw new RuntimeException("Unauthorized to update this property");
         }
 
@@ -73,60 +79,99 @@ public class PropertyService {
         property.setAmenities(request.getAmenities());
         property.setImages(request.getImages());
 
-        return propertyRepository.save(property);
+        propertyMapper.updateById(property);
+        return property;
     }
 
     @Transactional
     @CacheEvict(value = "properties", allEntries = true)
     public void deleteProperty(Long propertyId, Long landlordId) {
-        Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+        Property property = propertyMapper.selectById(propertyId);
+        if (property == null) {
+            throw new RuntimeException("Property not found");
+        }
 
-        if (!property.getLandlord().getId().equals(landlordId)) {
+        if (!property.getLandlordId().equals(landlordId)) {
             throw new RuntimeException("Unauthorized to delete this property");
         }
 
-        propertyRepository.delete(property);
+        propertyMapper.deleteById(propertyId);
     }
 
     @Cacheable(value = "properties", key = "#propertyId")
     public Property getPropertyById(Long propertyId) {
-        return propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+        Property property = propertyMapper.selectById(propertyId);
+        if (property == null) {
+            throw new RuntimeException("Property not found");
+        }
+        return property;
     }
 
-    @Cacheable(value = "properties", key = "'all-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-    public Page<Property> getAllProperties(Pageable pageable) {
-        return propertyRepository.findByAvailableTrue(pageable);
+    @Cacheable(value = "properties", key = "'all-' + #page + '-' + #size")
+    public IPage<Property> getAllProperties(int page, int size) {
+        Page<Property> pageParam = new Page<>(page + 1, size);
+        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("available", true);
+        return propertyMapper.selectPage(pageParam, queryWrapper);
     }
 
-    public Page<Property> getPropertiesByLandlord(Long landlordId, Pageable pageable) {
-        User landlord = userRepository.findById(landlordId)
-                .orElseThrow(() -> new RuntimeException("Landlord not found"));
-        return propertyRepository.findByLandlord(landlord, pageable);
+    public IPage<Property> getPropertiesByLandlord(Long landlordId, int page, int size) {
+        User landlord = userMapper.selectById(landlordId);
+        if (landlord == null) {
+            throw new RuntimeException("Landlord not found");
+        }
+        Page<Property> pageParam = new Page<>(page + 1, size);
+        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("landlord_id", landlordId);
+        return propertyMapper.selectPage(pageParam, queryWrapper);
     }
 
-    public Page<Property> searchProperties(String city, BigDecimal minPrice, 
+    public IPage<Property> searchProperties(String city, BigDecimal minPrice, 
                                           BigDecimal maxPrice, Integer bedrooms, 
-                                          Pageable pageable) {
-        return propertyRepository.searchProperties(city, minPrice, maxPrice, bedrooms, pageable);
+                                          int page, int size) {
+        Page<Property> pageParam = new Page<>(page + 1, size);
+        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("available", true);
+        if (city != null) {
+            queryWrapper.eq("city", city);
+        }
+        if (minPrice != null) {
+            queryWrapper.ge("price", minPrice);
+        }
+        if (maxPrice != null) {
+            queryWrapper.le("price", maxPrice);
+        }
+        if (bedrooms != null) {
+            queryWrapper.ge("bedrooms", bedrooms);
+        }
+        return propertyMapper.selectPage(pageParam, queryWrapper);
     }
 
     @Cacheable(value = "popularProperties")
     public List<Property> getPopularProperties() {
-        return propertyRepository.findTop10ByAvailableTrueOrderByBookingCountDesc();
+        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("available", true)
+                    .orderByDesc("booking_count")
+                    .last("LIMIT 10");
+        return propertyMapper.selectList(queryWrapper);
     }
 
     @Cacheable(value = "topRatedProperties")
     public List<Property> getTopRatedProperties() {
-        return propertyRepository.findTop10ByAvailableTrueOrderByRatingDesc();
+        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("available", true)
+                    .orderByDesc("rating")
+                    .last("LIMIT 10");
+        return propertyMapper.selectList(queryWrapper);
     }
 
     @Transactional
     public void incrementViewCount(Long propertyId) {
-        Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+        Property property = propertyMapper.selectById(propertyId);
+        if (property == null) {
+            throw new RuntimeException("Property not found");
+        }
         property.setViewCount(property.getViewCount() + 1);
-        propertyRepository.save(property);
+        propertyMapper.updateById(property);
     }
 }

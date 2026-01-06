@@ -1,14 +1,13 @@
 package com.recommendation.homestay.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.recommendation.homestay.dto.JwtResponse;
 import com.recommendation.homestay.dto.LoginRequest;
 import com.recommendation.homestay.dto.RegisterRequest;
 import com.recommendation.homestay.entity.User;
-import com.recommendation.homestay.repository.UserRepository;
+import com.recommendation.homestay.mapper.UserMapper;
 import com.recommendation.homestay.security.JwtTokenProvider;
 import com.recommendation.homestay.security.UserPrincipal;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,10 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
-
     @Autowired
-    private UserRepository userRepository;
+    private UserMapper userMapper;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -37,15 +34,15 @@ public class AuthService {
 
     @Transactional
     public User registerUser(RegisterRequest request) {
-        logger.info("Registering new user: {}", request.getUsername());
-        
-        if (userRepository.existsByUsername(request.getUsername())) {
-            logger.error("Registration failed: Username already exists: {}", request.getUsername());
+        QueryWrapper<User> usernameQuery = new QueryWrapper<>();
+        usernameQuery.eq("username", request.getUsername());
+        if (userMapper.selectCount(usernameQuery) > 0) {
             throw new RuntimeException("Username already exists");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            logger.error("Registration failed: Email already exists: {}", request.getEmail());
+        QueryWrapper<User> emailQuery = new QueryWrapper<>();
+        emailQuery.eq("email", request.getEmail());
+        if (userMapper.selectCount(emailQuery) > 0) {
             throw new RuntimeException("Email already exists");
         }
 
@@ -67,40 +64,29 @@ public class AuthService {
         
         user.setEnabled(true);
 
-        User savedUser = userRepository.save(user);
-        logger.info("Successfully registered user: {}, userId: {}", savedUser.getUsername(), savedUser.getId());
-        return savedUser;
+        userMapper.insert(user);
+        return user;
     }
 
     public JwtResponse loginUser(LoginRequest request) {
-        logger.info("Login attempt for user: {}", request.getUsername());
-        
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    request.getUsername(),
-                    request.getPassword()
-                )
-            );
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                request.getUsername(),
+                request.getPassword()
+            )
+        );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = tokenProvider.generateToken(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = tokenProvider.generateToken(authentication);
 
-            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-            
-            logger.info("Login successful for user: {}, userId: {}", 
-                       userPrincipal.getUsername(), userPrincipal.getId());
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-            return new JwtResponse(
-                jwt,
-                userPrincipal.getId(),
-                userPrincipal.getUsername(),
-                userPrincipal.getEmail(),
-                userPrincipal.getAuthorities().iterator().next().getAuthority()
-            );
-        } catch (Exception e) {
-            logger.error("Login failed for userId or username, error: {}", e.getMessage());
-            throw e;
-        }
+        return new JwtResponse(
+            jwt,
+            userPrincipal.getId(),
+            userPrincipal.getUsername(),
+            userPrincipal.getEmail(),
+            userPrincipal.getAuthorities().iterator().next().getAuthority()
+        );
     }
 }

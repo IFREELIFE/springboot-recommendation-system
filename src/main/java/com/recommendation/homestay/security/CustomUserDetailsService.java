@@ -1,9 +1,8 @@
 package com.recommendation.homestay.security;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.recommendation.homestay.entity.User;
-import com.recommendation.homestay.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.recommendation.homestay.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,35 +13,27 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CustomUserDetailsService.class);
-
     @Autowired
-    private UserRepository userRepository;
+    private UserMapper userMapper;
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        logger.debug("Loading user by username: {}", username);
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> {
-                    logger.error("User not found with username: {}", username);
-                    return new UsernameNotFoundException("User not found with username: " + username);
-                });
-
-        logger.debug("Successfully loaded user by username: {}, userId: {}", username, user.getId());
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username);
+        User user = userMapper.selectOne(queryWrapper);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found with username: " + username);
+        }
         return UserPrincipal.create(user);
     }
 
     @Transactional
     public UserDetails loadUserById(Long id) {
-        logger.debug("Loading user by id: {}", id);
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.error("User not found with id: {}", id);
-                    return new UsernameNotFoundException("User not found with id: " + id);
-                });
-
-        logger.debug("Successfully loaded user by id: {}, username: {}", id, user.getUsername());
+        User user = userMapper.selectById(id);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found with id: " + id);
+        }
         return UserPrincipal.create(user);
     }
 }
