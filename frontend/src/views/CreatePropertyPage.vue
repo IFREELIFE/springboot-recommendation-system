@@ -90,13 +90,40 @@
           />
         </el-form-item>
 
-        <el-form-item label="图片链接">
-          <el-input
-            v-model="form.images"
-            type="textarea"
-            :rows="3"
-            placeholder="多个图片链接请用逗号分隔"
-          />
+        <el-form-item label="房源图片">
+          <el-upload
+            class="upload-block"
+            drag
+            multiple
+            action="#"
+            :auto-upload="false"
+            :file-list="fileList"
+            :on-change="handleFileChange"
+            :on-remove="handleFileChange"
+          >
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">将图片拖到此处，或<em>点击上传</em></div>
+            <div class="el-upload__tip">支持多张图片，上传后保存到本地服务器</div>
+          </el-upload>
+          <el-button
+            type="primary"
+            size="default"
+            style="margin-top: 12px"
+            :loading="uploading"
+            @click="uploadImages"
+          >
+            上传图片
+          </el-button>
+          <div v-if="uploadedImages.length" class="uploaded-list">
+            <el-tag
+              v-for="url in uploadedImages"
+              :key="url"
+              type="success"
+              class="upload-tag"
+            >
+              {{ url }}
+            </el-tag>
+          </div>
         </el-form-item>
 
         <el-form-item>
@@ -113,11 +140,15 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue'
 import propertyService from '../services/propertyService'
 
 const router = useRouter()
 const formRef = ref()
 const loading = ref(false)
+const uploading = ref(false)
+const fileList = ref([])
+const uploadedImages = ref([])
 
 const form = reactive({
   title: '',
@@ -145,6 +176,30 @@ const rules = {
   maxGuests: [{ required: true, message: '请输入最多可住人数', trigger: 'blur' }]
 }
 
+const handleFileChange = (file, files) => {
+  fileList.value = files
+}
+
+const uploadImages = async () => {
+  if (!fileList.value.length) {
+    ElMessage.warning('请先选择要上传的图片')
+    return
+  }
+  uploading.value = true
+  try {
+    const files = fileList.value.map((item) => item.raw || item)
+    const response = await propertyService.uploadImages(files)
+    if (response.success) {
+      uploadedImages.value = response.data
+      ElMessage.success('图片上传成功')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '上传失败，请重试')
+  } finally {
+    uploading.value = false
+  }
+}
+
 const handleSubmit = async () => {
   if (!formRef.value) return
 
@@ -157,8 +212,8 @@ const handleSubmit = async () => {
           amenities: form.amenities
             ? JSON.stringify(form.amenities.split(',').map((a) => a.trim()))
             : '[]',
-          images: form.images
-            ? JSON.stringify(form.images.split(',').map((i) => i.trim()))
+          images: uploadedImages.value.length
+            ? JSON.stringify(uploadedImages.value)
             : '[]'
         }
 
@@ -186,5 +241,16 @@ const handleSubmit = async () => {
 .card-header {
   font-size: 18px;
   font-weight: bold;
+}
+
+.uploaded-list {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.upload-tag {
+  margin-right: 4px;
 }
 </style>
