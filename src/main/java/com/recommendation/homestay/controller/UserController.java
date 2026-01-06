@@ -50,7 +50,7 @@ public class UserController {
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             QueryWrapper<User> emailQuery = new QueryWrapper<>();
             emailQuery.eq("email", request.getEmail()).ne("id", user.getId());
-            // 数据库应保持唯一约束，这里做一次显式检查以提供友好错误信息
+            // 数据库应保持唯一约束，这里先显式检查以提供友好错误信息，实际唯一性仍以数据库约束兜底避免并发竞态
             if (userMapper.selectCount(emailQuery) > 0) {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "Email already in use"));
             }
