@@ -2,6 +2,7 @@ package com.recommendation.homestay.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.List;
@@ -13,8 +14,10 @@ import java.util.List;
 @Setter
 public class PageResponse<T> {
     // 分页核心字段
+    @Getter(AccessLevel.NONE)
     @JsonIgnore
     private List<T> records;    // 数据列表
+    @Getter(AccessLevel.NONE)
     @JsonIgnore
     private long total;         // 总条数
     private long size;          // 每页条数
