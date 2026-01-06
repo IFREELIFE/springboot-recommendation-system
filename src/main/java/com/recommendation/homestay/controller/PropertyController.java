@@ -67,20 +67,21 @@ public class PropertyController {
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     public ResponseEntity<?> uploadImages(@RequestParam("files") MultipartFile[] files) {
         if (files == null || files.length == 0) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "No files provided"));
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "未选择任何文件"));
         }
 
         try {
             Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
             Files.createDirectories(uploadPath);
 
+            String sizeLimitMsg = String.format("单个文件大小不能超过%.1fMB", maxFileSize / 1024.0 / 1024.0);
             List<String> imageUrls = new ArrayList<>();
             for (MultipartFile file : files) {
                 if (file == null || file.isEmpty()) {
                     continue;
                 }
                 if (file.getSize() > maxFileSize) {
-                    return ResponseEntity.badRequest().body(new ApiResponse(false, "单个文件大小不能超过限制"));
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, sizeLimitMsg));
                 }
                 if (file.getContentType() == null || !file.getContentType().toLowerCase().startsWith("image/")) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "仅支持图片文件上传"));
@@ -110,25 +111,15 @@ public class PropertyController {
                 if (!targetLocation.startsWith(uploadPath)) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "非法的文件路径"));
                 }
-                int retry = 0;
-                while (Files.exists(targetLocation) && retry < 5) {
-                    filename = UUID.randomUUID().toString().replace("-", "") + extension;
-                    targetLocation = uploadPath.resolve(filename).normalize();
-                    retry++;
-                }
-                if (Files.exists(targetLocation)) {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ApiResponse(false, "生成文件名失败，请重试"));
-                }
                 Files.write(targetLocation, fileBytes, StandardOpenOption.CREATE_NEW);
                 imageUrls.add("/api/uploads/" + filename);
             }
 
             if (imageUrls.isEmpty()) {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "No valid files to upload"));
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "没有可上传的有效图片"));
             }
 
-            return ResponseEntity.ok(new ApiResponse(true, "Images uploaded successfully", imageUrls));
+            return ResponseEntity.ok(new ApiResponse(true, "图片上传成功", imageUrls));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(false, "Failed to upload images: " + e.getMessage()));
