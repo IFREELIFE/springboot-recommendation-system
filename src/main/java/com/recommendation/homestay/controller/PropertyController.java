@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import javax.imageio.ImageIO;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -100,13 +99,15 @@ public class PropertyController {
                 if (!ALLOWED_EXT.contains(lowerExt)) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "不支持的图片格式"));
                 }
-                byte[] fileBytes = file.getBytes();
-                // 简单魔数校验
-                if (ImageIO.read(new java.io.ByteArrayInputStream(fileBytes)) == null) {
+                byte[] header = new byte[12];
+                int read = file.getInputStream().read(header);
+                if (!isValidImageHeader(header, read)) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "文件内容不是有效图片"));
                 }
 
-                String filename = UUID.randomUUID().toString().replace("-", "") + extension;
+                byte[] fileBytes = file.getBytes();
+
+                String filename = UUID.randomUUID().toString() + extension;
                 Path targetLocation = uploadPath.resolve(filename).normalize();
                 if (!targetLocation.startsWith(uploadPath)) {
                     return ResponseEntity.badRequest().body(new ApiResponse(false, "非法的文件路径"));
@@ -122,8 +123,33 @@ public class PropertyController {
             return ResponseEntity.ok(new ApiResponse(true, "图片上传成功", imageUrls));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "Failed to upload images: " + e.getMessage()));
+                    .body(new ApiResponse(false, "图片上传失败: " + e.getMessage()));
         }
+    }
+
+    private boolean isValidImageHeader(byte[] header, int read) {
+        if (read < 4) {
+            return false;
+        }
+        // JPEG
+        if (read >= 3 && (header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF) {
+            return true;
+        }
+        // PNG
+        if (read >= 8 && header[0] == (byte) 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47
+                && header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A) {
+            return true;
+        }
+        // GIF
+        if (read >= 4 && header[0] == 'G' && header[1] == 'I' && header[2] == 'F' && header[3] == '8') {
+            return true;
+        }
+        // WEBP (RIFF....WEBP)
+        if (read >= 12 && header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F'
+                && header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
+            return true;
+        }
+        return false;
     }
 
     @PutMapping("/{id}")
