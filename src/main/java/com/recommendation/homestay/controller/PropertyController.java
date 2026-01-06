@@ -27,7 +27,7 @@ public class PropertyController {
     private PropertyService propertyService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     public ResponseEntity<?> createProperty(
             @Valid @RequestBody PropertyRequest request,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -42,7 +42,7 @@ public class PropertyController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     public ResponseEntity<?> updateProperty(
             @PathVariable Long id,
             @Valid @RequestBody PropertyRequest request,
@@ -57,7 +57,7 @@ public class PropertyController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     public ResponseEntity<?> deleteProperty(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -102,7 +102,7 @@ public class PropertyController {
     }
 
     @GetMapping("/landlord/my-properties")
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     public ResponseEntity<?> getMyProperties(
             @AuthenticationPrincipal UserPrincipal currentUser,
             @RequestParam(defaultValue = "0") int page,

@@ -3,6 +3,7 @@ package com.recommendation.homestay.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.OrderRequest;
+import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.entity.Order;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.OrderService;
@@ -71,7 +72,8 @@ public class OrderController {
             @RequestParam(defaultValue = "10") int size) {
         try {
             IPage<Order> orders = orderService.getUserOrders(currentUser.getId(), page, size);
-            return ResponseEntity.ok(new ApiResponse(true, "Orders retrieved successfully", orders));
+            PageResponse<Order> pageResponse = PageResponse.fromIPage(orders);
+            return ResponseEntity.ok(new ApiResponse(true, "Orders retrieved successfully", pageResponse));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));

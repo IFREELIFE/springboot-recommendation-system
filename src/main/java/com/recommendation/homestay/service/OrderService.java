@@ -118,7 +118,12 @@ public class OrderService {
         Page<Order> pageParam = new Page<>(page + 1, size);
         QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId).orderByDesc("created_at");
-        return orderMapper.selectPage(pageParam, queryWrapper);
+        IPage<Order> orders = orderMapper.selectPage(pageParam, queryWrapper);
+        orders.getRecords().forEach(order -> {
+            Property property = propertyMapper.selectById(order.getPropertyId());
+            order.setProperty(property);
+        });
+        return orders;
     }
 
     @Transactional

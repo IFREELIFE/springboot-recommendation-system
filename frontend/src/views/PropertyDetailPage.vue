@@ -104,10 +104,12 @@ import dayjs from 'dayjs'
 import propertyService from '../services/propertyService'
 import orderService from '../services/orderService'
 import { useUserStore } from '../store/user'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const { isAuthenticated } = storeToRefs(userStore)
 
 const property = ref(null)
 const loading = ref(true)
@@ -161,7 +163,7 @@ onMounted(async () => {
 })
 
 const showBookingDialog = () => {
-  if (!userStore.isAuthenticated) {
+  if (!isAuthenticated.value) {
     ElMessage.warning('请先登录')
     router.push('/login')
     return
