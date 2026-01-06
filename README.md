@@ -51,7 +51,7 @@ Spring Boot based backend management system for homestay property recommendation
 - **缓存**: Redis
 - **搜索引擎**: Elasticsearch
 - **安全**: Spring Security + JWT
-- **ORM**: Spring Data JPA (Hibernate)
+- **ORM**: MyBatis-Plus 3.5.3.1
 - **构建工具**: Maven
 - **Java版本**: 11
 
@@ -70,12 +70,12 @@ src/main/java/com/recommendation/homestay/
 │   ├── PropertyService.java                # Property management
 │   ├── OrderService.java                   # Order management
 │   └── RecommendationService.java          # Recommendation algorithms
-├── repository/                              # Data access layer
-│   ├── UserRepository.java
-│   ├── PropertyRepository.java
-│   ├── OrderRepository.java
-│   └── UserPropertyInteractionRepository.java
-├── entity/                                  # JPA entities
+├── mapper/                                  # MyBatis-Plus Mapper interfaces
+│   ├── UserMapper.java
+│   ├── PropertyMapper.java
+│   ├── OrderMapper.java
+│   └── UserPropertyInteractionMapper.java
+├── entity/                                  # MyBatis-Plus entities
 │   ├── User.java
 │   ├── Property.java
 │   ├── Order.java
@@ -287,6 +287,56 @@ Authorization: Bearer {jwt_token}
 - 推荐结果缓存
 - 热门房源缓存
 - 高评分房源缓存
+
+## MyBatis-Plus ORM 实现 (MyBatis-Plus Implementation)
+
+本项目完全采用 **MyBatis-Plus** 作为 ORM 框架，没有使用 Spring Data JPA。
+
+### 核心特性
+- **BaseMapper**: 所有 Mapper 接口继承 BaseMapper，获得标准 CRUD 方法
+- **QueryWrapper**: 使用 QueryWrapper 构建灵活的查询条件
+- **自动填充**: 使用 MyMetaObjectHandler 自动填充 createdAt 和 updatedAt 字段
+- **分页插件**: 集成 MyBatis-Plus 分页插件，支持自动分页
+
+### 示例代码
+
+#### 实体类 (Entity)
+```java
+@Data
+@TableName("users")
+public class User {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
+    private String username;
+    
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+}
+```
+
+#### Mapper 接口
+```java
+@Mapper
+public interface UserMapper extends BaseMapper<User> {
+    // 继承 BaseMapper 自动获得 CRUD 方法
+}
+```
+
+#### Service 层查询
+```java
+// 使用 QueryWrapper 查询
+QueryWrapper<User> query = new QueryWrapper<>();
+query.eq("username", username);
+User user = userMapper.selectOne(query);
+
+// 分页查询
+Page<Property> page = new Page<>(pageNum, pageSize);
+IPage<Property> result = propertyMapper.selectPage(page, queryWrapper);
+```
+
+### 详细文档
+完整的 MyBatis-Plus 实现说明请参考: [MYBATIS_PLUS_IMPLEMENTATION.md](MYBATIS_PLUS_IMPLEMENTATION.md)
 
 ## 数据库设计 (Database Schema)
 
