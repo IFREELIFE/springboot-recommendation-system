@@ -1,5 +1,6 @@
 package com.recommendation.homestay.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.util.List;
@@ -10,7 +11,9 @@ import java.util.List;
 @Data
 public class PageResponse<T> {
     // 分页核心字段
+    @JsonIgnore
     private List<T> records;    // 数据列表
+    @JsonIgnore
     private long total;         // 总条数
     private long size;          // 每页条数
     private long current;       // 当前页（从0/1开始，和前端保持一致）
