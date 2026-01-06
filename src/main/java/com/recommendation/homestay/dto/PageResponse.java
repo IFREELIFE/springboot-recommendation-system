@@ -2,13 +2,15 @@ package com.recommendation.homestay.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import java.util.List;
 
 /**
  * 通用分页响应DTO（替代IPage，避免类型转换异常）
  */
-@Data
+@Getter
+@Setter
 public class PageResponse<T> {
     // 分页核心字段
     @JsonIgnore
