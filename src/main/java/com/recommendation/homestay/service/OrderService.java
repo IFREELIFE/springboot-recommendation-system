@@ -131,7 +131,7 @@ public class OrderService {
             Map<Long, Property> propertyMap = propertyMapper.selectBatchIds(propertyIds)
                     .stream()
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toMap(Property::getId, Function.identity()));
+                    .collect(Collectors.toMap(Property::getId, Function.identity(), (existing, replacement) -> existing));
             orders.getRecords().forEach(order -> order.setProperty(propertyMap.get(order.getPropertyId())));
         }
         return orders;

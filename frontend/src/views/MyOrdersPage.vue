@@ -138,9 +138,9 @@ const fetchOrders = async () => {
       size: pagination.size
     })
     if (response.success) {
-      const pageData = response.data
-      orders.value = pageData.content || pageData.records || []
-      pagination.total = pageData.totalElements ?? pageData.total ?? 0
+      const { content = [], totalElements = 0 } = response.data || {}
+      orders.value = content
+      pagination.total = totalElements
     }
   } catch (error) {
     ElMessage.error('获取订单列表失败')
