@@ -30,11 +30,14 @@ public class RecommendationService {
 
     /**
      * Hybrid recommendation: Combines collaborative filtering and content-based filtering
+     * This is the MAIN HYBRID ALGORITHM that combines both recommendation approaches
      */
     @Cacheable(value = "recommendations", key = "#userId")
     public List<Property> getRecommendations(Long userId, int limit) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
 
         // Get recommendations from both algorithms
         List<Property> collaborativeRecommendations = getCollaborativeFilteringRecommendations(userId, limit * 2);
@@ -60,7 +63,7 @@ public class RecommendationService {
         return propertyScores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
-                .map(entry -> propertyRepository.findById(entry.getKey()).orElse(null))
+                .map(entry -> propertyMapper.selectById(entry.getKey()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
@@ -70,28 +73,28 @@ public class RecommendationService {
      * Finds similar users and recommends properties they liked
      */
     public List<Property> getCollaborativeFilteringRecommendations(Long userId, int limit) {
-        List<UserPropertyInteraction> userInteractions = interactionRepository.findByUser(
-            userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"))
-        );
+        QueryWrapper<UserPropertyInteraction> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId);
+        List<UserPropertyInteraction> userInteractions = interactionMapper.selectList(queryWrapper);
 
         if (userInteractions.isEmpty()) {
             // Cold start: return popular properties
-            return propertyRepository.findTop10ByAvailableTrueOrderByBookingCountDesc()
+            return propertyMapper.findTop10ByAvailableTrueOrderByBookingCountDesc()
                     .stream().limit(limit).collect(Collectors.toList());
         }
 
         // Get properties user has interacted with
         Set<Long> interactedPropertyIds = userInteractions.stream()
-                .map(i -> i.getProperty().getId())
+                .map(UserPropertyInteraction::getPropertyId)
                 .collect(Collectors.toSet());
 
         // Find similar users based on common property interactions
-        List<UserPropertyInteraction> allInteractions = interactionRepository.findAll();
+        List<UserPropertyInteraction> allInteractions = interactionMapper.selectList(null);
         
         Map<Long, Set<Long>> userPropertyMap = new HashMap<>();
         for (UserPropertyInteraction interaction : allInteractions) {
-            userPropertyMap.computeIfAbsent(interaction.getUser().getId(), k -> new HashSet<>())
-                    .add(interaction.getProperty().getId());
+            userPropertyMap.computeIfAbsent(interaction.getUserId(), k -> new HashSet<>())
+                    .add(interaction.getPropertyId());
         }
 
         // Calculate similarity scores with other users
@@ -99,7 +102,7 @@ public class RecommendationService {
         Set<Long> currentUserProperties = userPropertyMap.get(userId);
         
         if (currentUserProperties == null) {
-            return propertyRepository.findTop10ByAvailableTrueOrderByBookingCountDesc()
+            return propertyMapper.findTop10ByAvailableTrueOrderByBookingCountDesc()
                     .stream().limit(limit).collect(Collectors.toList());
         }
 
@@ -132,7 +135,7 @@ public class RecommendationService {
         return recommendationScores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
-                .map(entry -> propertyRepository.findById(entry.getKey()).orElse(null))
+                .map(entry -> propertyMapper.selectById(entry.getKey()))
                 .filter(Objects::nonNull)
                 .filter(Property::getAvailable)
                 .collect(Collectors.toList());
@@ -142,26 +145,31 @@ public class RecommendationService {
      * Content-Based Filtering: Recommend properties similar to what user has liked
      */
     public List<Property> getContentBasedRecommendations(Long userId, int limit) {
-        List<UserPropertyInteraction> userInteractions = interactionRepository.findByUser(
-            userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"))
-        );
+        QueryWrapper<UserPropertyInteraction> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId);
+        List<UserPropertyInteraction> userInteractions = interactionMapper.selectList(queryWrapper);
 
         if (userInteractions.isEmpty()) {
             // Cold start: return top-rated properties
-            return propertyRepository.findTop10ByAvailableTrueOrderByRatingDesc()
+            return propertyMapper.findTop10ByAvailableTrueOrderByRatingDesc()
                     .stream().limit(limit).collect(Collectors.toList());
         }
 
-        // Get properties user has positively interacted with
-        List<Property> likedProperties = userInteractions.stream()
-                .filter(i -> i.getType() == UserPropertyInteraction.InteractionType.FAVORITE || 
-                            i.getType() == UserPropertyInteraction.InteractionType.BOOK ||
-                            (i.getRating() != null && i.getRating() >= 4))
-                .map(UserPropertyInteraction::getProperty)
-                .collect(Collectors.toList());
+        // Load property details for interactions
+        List<Property> likedProperties = new ArrayList<>();
+        for (UserPropertyInteraction interaction : userInteractions) {
+            if (interaction.getType() == UserPropertyInteraction.InteractionType.FAVORITE || 
+                interaction.getType() == UserPropertyInteraction.InteractionType.BOOK ||
+                (interaction.getRating() != null && interaction.getRating() >= 4)) {
+                Property property = propertyMapper.selectById(interaction.getPropertyId());
+                if (property != null) {
+                    likedProperties.add(property);
+                }
+            }
+        }
 
         if (likedProperties.isEmpty()) {
-            return propertyRepository.findTop10ByAvailableTrueOrderByRatingDesc()
+            return propertyMapper.findTop10ByAvailableTrueOrderByRatingDesc()
                     .stream().limit(limit).collect(Collectors.toList());
         }
 
@@ -184,11 +192,13 @@ public class RecommendationService {
         avgBedrooms /= likedProperties.size();
 
         // Get all available properties
-        List<Property> allProperties = propertyRepository.findByAvailableTrue(null).getContent();
+        QueryWrapper<Property> availableQuery = new QueryWrapper<>();
+        availableQuery.eq("available", true);
+        List<Property> allProperties = propertyMapper.selectList(availableQuery);
         
         // Filter out already interacted properties
         Set<Long> interactedIds = userInteractions.stream()
-                .map(i -> i.getProperty().getId())
+                .map(UserPropertyInteraction::getPropertyId)
                 .collect(Collectors.toSet());
 
         // Score properties based on similarity to user preferences
@@ -231,7 +241,7 @@ public class RecommendationService {
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
-                .map(entry -> propertyRepository.findById(entry.getKey()).orElse(null))
+                .map(entry -> propertyMapper.selectById(entry.getKey()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }

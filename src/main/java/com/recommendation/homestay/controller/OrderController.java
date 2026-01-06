@@ -1,14 +1,12 @@
 package com.recommendation.homestay.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.OrderRequest;
 import com.recommendation.homestay.entity.Order;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,7 +43,7 @@ public class OrderController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
-            Order order = orderService.getOrderById(id, currentUser.getId());
+            Order order = orderService.getOrderById(id);
             return ResponseEntity.ok(new ApiResponse(true, "Order retrieved successfully", order));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -58,7 +56,7 @@ public class OrderController {
             @PathVariable String orderNumber,
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
-            Order order = orderService.getOrderByOrderNumber(orderNumber, currentUser.getId());
+            Order order = orderService.getOrderByNumber(orderNumber);
             return ResponseEntity.ok(new ApiResponse(true, "Order retrieved successfully", order));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -72,8 +70,7 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Order> orders = orderService.getUserOrders(currentUser.getId(), pageable);
+            IPage<Order> orders = orderService.getUserOrders(currentUser.getId(), page, size);
             return ResponseEntity.ok(new ApiResponse(true, "Orders retrieved successfully", orders));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
