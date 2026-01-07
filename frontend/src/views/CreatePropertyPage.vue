@@ -151,7 +151,8 @@ const loading = ref(false)
 const uploading = ref(false)
 const fileList = ref([])
 const uploadedImages = ref([])
-const isEdit = computed(() => Boolean(route.query.id))
+const propertyId = computed(() => (route.query.id ? String(route.query.id) : ''))
+const isEdit = computed(() => Boolean(propertyId.value))
 
 const form = reactive({
   title: '',
@@ -183,6 +184,7 @@ const handleFileChange = (file, files) => {
   fileList.value = files
 }
 
+// Accepts stringified JSON or array and returns comma-separated amenities
 const parseAmenities = (value) => {
   if (!value) return ''
   if (Array.isArray(value)) return value.join(',')
@@ -231,7 +233,13 @@ const loadProperty = async (id) => {
       ElMessage.error('房源信息获取失败')
     }
   } catch (error) {
-    ElMessage.error(error.message || '加载房源信息失败')
+    if (error.response?.status === 404) {
+      ElMessage.error('房源不存在或已删除')
+    } else if (error.response?.status === 403) {
+      ElMessage.error('您无权编辑该房源')
+    } else {
+      ElMessage.error(error.message || '加载房源信息失败')
+    }
   } finally {
     loading.value = false
   }
@@ -277,7 +285,7 @@ const handleSubmit = async () => {
         }
 
         const response = isEdit.value
-          ? await propertyService.updateProperty(route.query.id, propertyData)
+          ? await propertyService.updateProperty(propertyId.value, propertyData)
           : await propertyService.createProperty(propertyData)
 
         if (response.success) {
@@ -295,7 +303,12 @@ const handleSubmit = async () => {
 
 onMounted(() => {
   if (isEdit.value) {
-    loadProperty(route.query.id)
+    if (!/^[0-9]+$/.test(propertyId.value)) {
+      ElMessage.error('房源信息无效')
+      router.push('/my-properties')
+      return
+    }
+    loadProperty(propertyId.value)
   }
 })
 </script>
