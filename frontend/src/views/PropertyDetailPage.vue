@@ -154,9 +154,17 @@ onMounted(async () => {
     const response = await propertyService.getPropertyById(route.params.id)
     if (response.success) {
       property.value = response.data
+    } else {
+      ElMessage.error('房源不存在或已下架')
+      router.push('/properties')
     }
   } catch (error) {
-    ElMessage.error('获取房源信息失败')
+    if (error.response?.status === 404) {
+      ElMessage.error('房源不存在或已下架')
+      router.push('/properties')
+    } else {
+      ElMessage.error('获取房源信息失败')
+    }
   } finally {
     loading.value = false
   }
