@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,7 @@ public class PropertyService {
     private ObjectMapper objectMapper;
 
     @Transactional
+    @CacheEvict(value = {"popularProperties", "topRatedProperties"}, allEntries = true)
     public Property createProperty(PropertyRequest request, Long landlordId) {
         User landlord = userMapper.selectById(landlordId);
         if (landlord == null) {
@@ -69,7 +71,10 @@ public class PropertyService {
     }
 
     @Transactional
-    @CacheEvict(value = "properties", key = "#propertyId")
+    @Caching(evict = {
+            @CacheEvict(value = "properties", key = "#propertyId"),
+            @CacheEvict(value = {"popularProperties", "topRatedProperties"}, allEntries = true)
+    })
     public Property updateProperty(Long propertyId, PropertyRequest request, Long landlordId) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
@@ -98,7 +103,10 @@ public class PropertyService {
     }
 
     @Transactional
-    @CacheEvict(value = "properties", key = "#propertyId")
+    @Caching(evict = {
+            @CacheEvict(value = "properties", key = "#propertyId"),
+            @CacheEvict(value = {"popularProperties", "topRatedProperties"}, allEntries = true)
+    })
     public Property appendImages(Long propertyId, List<String> newImages) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
@@ -124,7 +132,10 @@ public class PropertyService {
     }
 
     @Transactional
-    @CacheEvict(value = "properties", key = "#propertyId")
+    @Caching(evict = {
+            @CacheEvict(value = "properties", key = "#propertyId"),
+            @CacheEvict(value = {"popularProperties", "topRatedProperties"}, allEntries = true)
+    })
     public void deleteProperty(Long propertyId, Long landlordId) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
