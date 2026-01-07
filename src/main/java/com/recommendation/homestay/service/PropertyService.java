@@ -97,7 +97,7 @@ public class PropertyService {
     public Property appendImages(Long propertyId, List<String> newImages) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
-            throw new RuntimeException("Property not found");
+            throw new RuntimeException("Property not found with ID: " + propertyId);
         }
         List<String> merged = new ArrayList<>();
         try {
@@ -105,14 +105,14 @@ public class PropertyService {
                 merged.addAll(objectMapper.readValue(property.getImages(), new TypeReference<List<String>>() {
                 }));
             }
-        } catch (Exception ignored) {
-            log.warn("Failed to parse existing images for property {}", propertyId);
+        } catch (Exception e) {
+            log.warn("Failed to parse existing images for property {}", propertyId, e);
         }
         merged.addAll(newImages);
         try {
             property.setImages(objectMapper.writeValueAsString(merged));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to save images");
+            throw new RuntimeException("Failed to save images: " + e.getMessage(), e);
         }
         propertyMapper.updateById(property);
         return property;
