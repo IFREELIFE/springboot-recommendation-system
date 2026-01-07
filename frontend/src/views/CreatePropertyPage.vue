@@ -151,7 +151,7 @@ const loading = ref(false)
 const uploading = ref(false)
 const fileList = ref([])
 const uploadedImages = ref([])
-const propertyIdPattern = /^[1-9][0-9]*$/
+const VALID_PROPERTY_ID_PATTERN = /^[1-9][0-9]*$/
 const propertyId = computed(() => (route.query.id ? String(route.query.id) : ''))
 const isEdit = computed(() => Boolean(propertyId.value))
 
@@ -306,7 +306,7 @@ const handleSubmit = async () => {
 
 onMounted(() => {
   if (isEdit.value) {
-    if (!propertyId.value || !propertyIdPattern.test(propertyId.value)) {
+    if (!propertyId.value || !VALID_PROPERTY_ID_PATTERN.test(propertyId.value)) {
       ElMessage.error('房源信息无效')
       router.push('/my-properties')
       return
