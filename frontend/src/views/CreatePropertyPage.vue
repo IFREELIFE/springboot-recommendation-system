@@ -192,6 +192,7 @@ const parseAmenities = (value) => {
     const parsed = JSON.parse(value)
     return Array.isArray(parsed) ? parsed.join(',') : ''
   } catch (e) {
+    console.warn('Invalid amenities data', value, e)
     return ''
   }
 }
@@ -205,6 +206,7 @@ const parseImages = (data) => {
       const parsed = JSON.parse(data.images)
       return Array.isArray(parsed) ? parsed : []
     } catch (e) {
+      console.warn('Invalid images data', data.images, e)
       return []
     }
   }
@@ -303,7 +305,7 @@ const handleSubmit = async () => {
 
 onMounted(() => {
   if (isEdit.value) {
-    if (!/^[0-9]+$/.test(propertyId.value)) {
+    if (!/^[1-9][0-9]*$/.test(propertyId.value)) {
       ElMessage.error('房源信息无效')
       router.push('/my-properties')
       return
