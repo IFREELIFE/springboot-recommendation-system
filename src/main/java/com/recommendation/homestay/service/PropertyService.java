@@ -70,7 +70,7 @@ public class PropertyService {
     }
 
     @Transactional
-    @CacheEvict(value = "properties", allEntries = true)
+    @CacheEvict(value = "properties", key = "#propertyId")
     public Property updateProperty(Long propertyId, PropertyRequest request, Long landlordId) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
