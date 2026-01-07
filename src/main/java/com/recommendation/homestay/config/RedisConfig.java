@@ -24,6 +24,7 @@ import java.time.Duration;
 public class RedisConfig {
 
     private static final Jackson2JsonRedisSerializer<Object> JACKSON_SERIALIZER = createJacksonSerializer();
+    private static final String[] KNOWN_CACHES = {"properties", "popularProperties", "topRatedProperties"};
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -57,7 +58,7 @@ public class RedisConfig {
                 .cacheDefaults(config)
                 .build();
 
-        for (String cacheName : new String[]{"properties", "popularProperties", "topRatedProperties"}) {
+        for (String cacheName : KNOWN_CACHES) {
             Cache cache = cacheManager.getCache(cacheName);
             if (cache != null) {
                 cache.clear();
