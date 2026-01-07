@@ -200,7 +200,7 @@ const parseAmenities = (value) => {
 
 const parseImages = (data) => {
   if (data?.imagesBase64?.length) {
-    return data.imagesBase64.map((b64) => `data:image/jpeg;base64,${b64}`)
+    return data.imagesBase64.map((b64) => `data:image/*;base64,${b64}`)
   }
   if (data?.images) {
     try {
@@ -306,7 +306,7 @@ const handleSubmit = async () => {
 
 onMounted(() => {
   if (isEdit.value) {
-    if (!propertyIdPattern.test(propertyId.value)) {
+    if (!propertyId.value || !propertyIdPattern.test(propertyId.value)) {
       ElMessage.error('房源信息无效')
       router.push('/my-properties')
       return
