@@ -200,7 +200,7 @@ const parseAmenities = (value) => {
 
 const parseImages = (data) => {
   if (data?.imagesBase64?.length) {
-    return data.imagesBase64.map((b64) => `data:image/*;base64,${b64}`)
+    return data.imagesBase64.map((b64) => `data:image/jpeg;base64,${b64}`)
   }
   if (data?.images) {
     try {
