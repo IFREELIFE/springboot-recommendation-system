@@ -42,7 +42,6 @@ public class PropertyService {
     private ObjectMapper objectMapper;
 
     @Transactional
-    @CacheEvict(value = "properties", allEntries = true)
     public Property createProperty(PropertyRequest request, Long landlordId) {
         User landlord = userMapper.selectById(landlordId);
         if (landlord == null) {
@@ -125,7 +124,7 @@ public class PropertyService {
     }
 
     @Transactional
-    @CacheEvict(value = "properties", allEntries = true)
+    @CacheEvict(value = "properties", key = "#propertyId")
     public void deleteProperty(Long propertyId, Long landlordId) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
