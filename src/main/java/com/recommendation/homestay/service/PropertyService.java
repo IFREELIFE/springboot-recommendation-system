@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.recommendation.homestay.dto.PropertyRequest;
+import com.recommendation.homestay.dto.PropertyResponseDTO;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.PropertyMapper;
 import com.recommendation.homestay.mapper.UserMapper;
+import com.recommendation.homestay.config.UploadUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -21,6 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 
 @Service
 public class PropertyService {
@@ -198,5 +203,57 @@ public class PropertyService {
         if (result == 0) {
             throw new RuntimeException("Property not found");
         }
+    }
+
+    public PropertyResponseDTO toResponseDTO(Property property) {
+        PropertyResponseDTO dto = new PropertyResponseDTO();
+        dto.setId(property.getId());
+        dto.setTitle(property.getTitle());
+        dto.setDescription(property.getDescription());
+        dto.setCity(property.getCity());
+        dto.setDistrict(property.getDistrict());
+        dto.setAddress(property.getAddress());
+        dto.setPrice(property.getPrice());
+        dto.setBedrooms(property.getBedrooms());
+        dto.setBathrooms(property.getBathrooms());
+        dto.setMaxGuests(property.getMaxGuests());
+        dto.setPropertyType(property.getPropertyType());
+        dto.setAmenities(property.getAmenities());
+        dto.setAvailable(property.getAvailable());
+        dto.setLandlordId(property.getLandlordId());
+        dto.setRating(property.getRating());
+        dto.setReviewCount(property.getReviewCount());
+        dto.setViewCount(property.getViewCount());
+        dto.setBookingCount(property.getBookingCount());
+        dto.setCreatedAt(property.getCreatedAt());
+        dto.setUpdatedAt(property.getUpdatedAt());
+
+        List<String> base64List = new ArrayList<>();
+        List<String> paths = new ArrayList<>();
+        try {
+            if (property.getImages() != null && !property.getImages().isBlank()) {
+                paths.addAll(objectMapper.readValue(property.getImages(), new TypeReference<List<String>>() {
+                }));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to parse images json for property {}", property.getId(), e);
+        }
+        for (String p : paths) {
+            String filename = p.replaceFirst("^/api/uploads/", "")
+                    .replaceFirst("^/uploads/", "")
+                    .replaceFirst("^uploads/", "");
+            Path resolved = UploadUtils.getUploadDir().resolve(filename).normalize();
+            if (!resolved.startsWith(UploadUtils.getUploadDir())) {
+                continue;
+            }
+            try {
+                byte[] bytes = Files.readAllBytes(resolved);
+                base64List.add(Base64.getEncoder().encodeToString(bytes));
+            } catch (Exception e) {
+                log.warn("Failed to read image file {}", resolved, e);
+            }
+        }
+        dto.setImagesBase64(base64List);
+        return dto;
     }
 }

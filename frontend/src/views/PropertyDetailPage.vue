@@ -122,6 +122,9 @@ const bookingForm = reactive({
 })
 
 const images = computed(() => {
+  if (property.value?.imagesBase64?.length) {
+    return property.value.imagesBase64.map((b64) => `data:image/*;base64,${b64}`)
+  }
   if (property.value?.images) {
     try {
       return JSON.parse(property.value.images)
