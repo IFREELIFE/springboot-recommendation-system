@@ -110,7 +110,7 @@ public class PropertyController {
                             .body(new ApiResponse(false, "文件路径无效"));
                 }
                 file.transferTo(targetPath.toFile());
-                imageUrls.add("/uploads/" + filename);
+                imageUrls.add("/api/uploads/" + filename);
             }
 
             if (imageUrls.isEmpty()) {

@@ -194,8 +194,8 @@ Content-Type: multipart/form-data
   "success": true,
   "message": "Images uploaded successfully",
   "data": [
-    "/uploads/8d08c2a1f0d84e39bd1f98f0a524bba1.jpg",
-    "/uploads/9e9f22c541cf4b338c05a62012d613ab.png"
+    "/api/uploads/8d08c2a1f0d84e39bd1f98f0a524bba1.jpg",
+    "/api/uploads/9e9f22c541cf4b338c05a62012d613ab.png"
   ]
 }
 ```
