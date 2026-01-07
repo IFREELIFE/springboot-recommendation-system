@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -22,6 +23,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @Configuration
 @EnableCaching
@@ -65,11 +67,16 @@ public class RedisConfig {
                 .cacheDefaults(config)
                 .build();
 
-        if (clearCachesOnStartup) {
-            clearCaches(cacheManager);
-        }
-
         return cacheManager;
+    }
+
+    @Bean
+    public ApplicationRunner cacheClearRunner(CacheManager cacheManager) {
+        return args -> {
+            if (clearCachesOnStartup) {
+                CompletableFuture.runAsync(() -> clearCaches(cacheManager));
+            }
+        };
     }
 
     private void clearCaches(CacheManager cacheManager) {
