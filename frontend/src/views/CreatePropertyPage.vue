@@ -92,22 +92,39 @@
 
         <el-form-item label="房源图片">
           <el-upload
-            ref="uploadRef"
-            class="upload-area"
+            class="upload-block"
             drag
             multiple
+            action="#"
             :auto-upload="false"
             :file-list="fileList"
-            accept="image/*"
             :on-change="handleFileChange"
-            :on-remove="handleFileRemove"
+            :on-remove="handleFileChange"
+            accept="image/*"
           >
-            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-            <div class="el-upload__text">
-              将图片拖到此处，或<em>点击上传</em>
-            </div>
-            <div class="el-upload__tip">支持一次选择多张图片</div>
+            <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+            <div class="el-upload__text">将图片拖到此处，或<em>点击上传</em></div>
+            <div class="el-upload__tip">支持多张图片，上传后保存到本地服务器</div>
           </el-upload>
+          <el-button
+            type="primary"
+            size="default"
+            style="margin-top: 12px"
+            :loading="uploading"
+            @click="uploadImages"
+          >
+            上传图片
+          </el-button>
+          <div v-if="uploadedImages.length" class="uploaded-list">
+            <el-tag
+              v-for="url in uploadedImages"
+              :key="url"
+              type="success"
+              class="upload-tag"
+            >
+              {{ url }}
+            </el-tag>
+          </div>
         </el-form-item>
 
         <el-form-item>
@@ -130,8 +147,9 @@ import propertyService from '../services/propertyService'
 const router = useRouter()
 const formRef = ref()
 const loading = ref(false)
-const uploadRef = ref()
+const uploading = ref(false)
 const fileList = ref([])
+const uploadedImages = ref([])
 
 const form = reactive({
   title: '',
@@ -145,7 +163,7 @@ const form = reactive({
   maxGuests: 1,
   propertyType: '',
   amenities: '',
-  images: []
+  images: ''
 })
 
 const rules = {
@@ -159,12 +177,30 @@ const rules = {
   maxGuests: [{ required: true, message: '请输入最多可住人数', trigger: 'blur' }]
 }
 
-const handleFileChange = (_, uploadFiles) => {
-  fileList.value = uploadFiles
+const handleFileChange = (file, files) => {
+  fileList.value = files
 }
 
-const handleFileRemove = (_, uploadFiles) => {
-  fileList.value = uploadFiles
+const uploadImages = async () => {
+  if (!fileList.value.length) {
+    ElMessage.warning('请先选择要上传的图片')
+    return
+  }
+  uploading.value = true
+  try {
+    const files = fileList.value
+      .map((item) => item.raw || item)
+      .filter((f) => f instanceof File)
+    const response = await propertyService.uploadImages(files)
+    if (response.success) {
+      uploadedImages.value = response.data
+      ElMessage.success('图片上传成功')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '上传失败，请重试')
+  } finally {
+    uploading.value = false
+  }
 }
 
 const handleSubmit = async () => {
@@ -174,34 +210,14 @@ const handleSubmit = async () => {
     if (valid) {
       loading.value = true
       try {
-        let currentImages = Array.isArray(form.images) ? form.images : []
-        if (fileList.value.length > 0) {
-          const formData = new FormData()
-          let hasFile = false
-          fileList.value.forEach((file) => {
-            if (file.raw) {
-              formData.append('files', file.raw)
-              hasFile = true
-            }
-          })
-          if (!hasFile) {
-            throw new Error('请选择有效的图片文件')
-          }
-
-          const uploadResp = await propertyService.uploadImages(formData)
-          if (!uploadResp.success) {
-            throw new Error(uploadResp.message || '图片上传失败')
-          }
-          currentImages = uploadResp.data || []
-          form.images = currentImages
-        }
-
         const propertyData = {
           ...form,
           amenities: form.amenities
             ? JSON.stringify(form.amenities.split(',').map((a) => a.trim()))
             : '[]',
-          images: JSON.stringify(currentImages)
+          images: uploadedImages.value.length
+            ? JSON.stringify(uploadedImages.value)
+            : '[]'
         }
 
         const response = await propertyService.createProperty(propertyData)
@@ -230,7 +246,14 @@ const handleSubmit = async () => {
   font-weight: bold;
 }
 
-.upload-area {
-  width: 100%;
+.uploaded-list {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.upload-tag {
+  margin-right: 4px;
 }
 </style>

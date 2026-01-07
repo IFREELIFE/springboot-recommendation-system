@@ -175,6 +175,33 @@ Authorization: Bearer {token}
 
 ---
 
+### 5.1 上传房源图片 (Upload Property Images) - 需要 LANDLORD 角色
+
+**Endpoint**: `POST /api/properties/upload-images`
+
+**Headers**:
+```
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Request**:
+- `files`: 多张图片文件，使用相同的字段名 `files` 传递
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Images uploaded successfully",
+  "data": [
+    "/api/uploads/8d08c2a1f0d84e39bd1f98f0a524bba1.jpg",
+    "/api/uploads/9e9f22c541cf4b338c05a62012d613ab.png"
+  ]
+}
+```
+
+---
+
 ### 6. 更新房源 (Update Property) - 需要 LANDLORD 角色
 
 **Endpoint**: `PUT /api/properties/{id}`

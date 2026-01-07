@@ -1,7 +1,6 @@
 package com.recommendation.homestay.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.recommendation.homestay.config.UploadUtils;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyRequest;
@@ -9,22 +8,25 @@ import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.PropertyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.util.StringUtils;
 
 import javax.validation.Valid;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -37,9 +39,13 @@ public class PropertyController {
     @Autowired
     private PropertyService propertyService;
 
-    private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".webp"));
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-    private static final int MAX_FILES = 10;
+    @Value("${file.upload-dir:uploads}")
+    private String uploadDir;
+
+    @Value("${file.max-size-bytes:10485760}")
+    private long maxFileSize;
+
+    private static final Set<String> ALLOWED_EXT = new HashSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".webp"));
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -56,73 +62,94 @@ public class PropertyController {
         }
     }
 
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
-    public ResponseEntity<?> uploadPropertyImages(@RequestParam("files") MultipartFile[] files) {
+    public ResponseEntity<?> uploadImages(@RequestParam("files") MultipartFile[] files) {
         if (files == null || files.length == 0) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "请至少选择一张图片"));
-        }
-        if (files.length > MAX_FILES) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "一次最多上传" + MAX_FILES + "张图片"));
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "未选择任何文件"));
         }
 
         try {
-            Path uploadDir = UploadUtils.getUploadDir().normalize();
-            try {
-                Files.createDirectories(uploadDir);
-            } catch (SecurityException se) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ApiResponse(false, "无法创建上传目录"));
-            }
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Files.createDirectories(uploadPath);
 
+            String sizeLimitMsg = String.format("单个文件大小不能超过%.1fMB", maxFileSize / 1024.0 / 1024.0);
             List<String> imageUrls = new ArrayList<>();
-
             for (MultipartFile file : files) {
-                if (file.isEmpty()) {
+                if (file == null || file.isEmpty()) {
                     continue;
                 }
-                String originalFilename = file.getOriginalFilename();
-                if (originalFilename == null || originalFilename.isBlank()) {
-                    return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, "文件名无效"));
+                if (file.getSize() > maxFileSize) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, sizeLimitMsg));
                 }
-                originalFilename = StringUtils.cleanPath(originalFilename);
-
+                if (file.getContentType() == null || !file.getContentType().toLowerCase().startsWith("image/")) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "仅支持图片文件上传"));
+                }
+                String originalFilename = StringUtils.cleanPath(
+                        file.getOriginalFilename() == null ? "" : file.getOriginalFilename());
+                if (originalFilename.isEmpty()) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "文件名无效"));
+                }
                 String extension = "";
-                int dotIndex = originalFilename.lastIndexOf(".");
+                int dotIndex = originalFilename.lastIndexOf('.');
                 if (dotIndex != -1) {
                     extension = originalFilename.substring(dotIndex);
                 }
-                if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-                    return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, "仅支持上传图片格式：" + ALLOWED_EXTENSIONS));
+                String lowerExt = extension.toLowerCase();
+                if (!ALLOWED_EXT.contains(lowerExt)) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "不支持的图片格式"));
                 }
-                if (file.getSize() > MAX_FILE_SIZE) {
-                    return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, "单个文件大小不能超过10MB"));
+                byte[] header = new byte[12];
+                int read = file.getInputStream().read(header);
+                if (!isValidImageHeader(header, read)) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "文件内容不是有效图片"));
                 }
+
+                byte[] fileBytes = file.getBytes();
+
                 String filename = UUID.randomUUID().toString() + extension;
-                Path targetPath = uploadDir.resolve(filename).normalize();
-                if (!targetPath.startsWith(uploadDir)) {
-                    return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, "文件路径无效"));
+                Path targetLocation = uploadPath.resolve(filename).normalize();
+                if (!targetLocation.startsWith(uploadPath)) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "非法的文件路径"));
                 }
-                file.transferTo(targetPath.toFile());
-                imageUrls.add("/uploads/" + filename);
+                Files.write(targetLocation, fileBytes, StandardOpenOption.CREATE_NEW);
+                imageUrls.add("/api/uploads/" + filename);
             }
 
             if (imageUrls.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "上传的图片无效"));
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "没有可上传的有效图片"));
             }
 
             return ResponseEntity.ok(new ApiResponse(true, "图片上传成功", imageUrls));
-        } catch (IOException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(false, "图片上传失败: " + e.getMessage()));
         }
+    }
+
+    private boolean isValidImageHeader(byte[] header, int read) {
+        if (read < 4) {
+            return false;
+        }
+        // JPEG
+        if (read >= 3 && (header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF) {
+            return true;
+        }
+        // PNG
+        if (read >= 8 && header[0] == (byte) 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47
+                && header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A) {
+            return true;
+        }
+        // GIF
+        if (read >= 4 && header[0] == 'G' && header[1] == 'I' && header[2] == 'F' && header[3] == '8') {
+            return true;
+        }
+        // WEBP (RIFF....WEBP)
+        if (read >= 12 && header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F'
+                && header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
+            return true;
+        }
+        return false;
     }
 
     @PutMapping("/{id}")

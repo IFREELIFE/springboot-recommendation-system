@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/search/**").permitAll()
-                .antMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/uploads/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 // JWT 过滤器（原有正确配置保留）

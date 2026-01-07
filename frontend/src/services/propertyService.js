@@ -36,9 +36,15 @@ const propertyService = {
     return response.data
   },
 
-  async uploadImages(formData) {
-    const response = await api.post('/properties/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+  async uploadImages(files) {
+    const formData = new FormData()
+    files.forEach((file) => {
+      formData.append('files', file)
+    })
+    const response = await api.post('/properties/upload-images', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     })
     return response.data
   },
