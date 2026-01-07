@@ -134,8 +134,9 @@ public class PropertyController {
 
             return ResponseEntity.ok(new ApiResponse(true, "图片上传成功", imageUrls));
         } catch (IOException e) {
+            log.error("图片上传失败", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "图片上传失败: " + e.getMessage()));
+                    .body(new ApiResponse(false, "图片上传失败，请稍后重试"));
         }
     }
 

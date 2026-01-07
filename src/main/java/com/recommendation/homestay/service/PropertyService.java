@@ -112,7 +112,7 @@ public class PropertyService {
         try {
             property.setImages(objectMapper.writeValueAsString(merged));
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to save images: " + e.getMessage(), e);
+            throw new IllegalStateException("Failed to save images", e);
         }
         propertyMapper.updateById(property);
         return property;
