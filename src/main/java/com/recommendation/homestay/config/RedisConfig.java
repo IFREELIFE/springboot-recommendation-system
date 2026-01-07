@@ -19,6 +19,9 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Configuration
 @EnableCaching
@@ -70,8 +73,8 @@ public class RedisConfig {
     }
 
     private void clearCaches(CacheManager cacheManager) {
-        java.util.Set<String> cacheNames = new java.util.LinkedHashSet<>(cacheManager.getCacheNames());
-        java.util.Collections.addAll(cacheNames, KNOWN_CACHES);
+        Set<String> cacheNames = new LinkedHashSet<>(cacheManager.getCacheNames());
+        Collections.addAll(cacheNames, KNOWN_CACHES);
         cacheNames.forEach(name -> {
             Cache cache = cacheManager.getCache(name);
             if (cache != null) {
