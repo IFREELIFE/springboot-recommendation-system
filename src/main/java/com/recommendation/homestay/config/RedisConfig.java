@@ -1,9 +1,11 @@
 package com.recommendation.homestay.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -29,15 +31,34 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // Use Jackson2JsonRedisSerializer for value serialization
+        // ========== 仅新增/修改这部分Jackson序列化器配置 ==========
+        // 1. 初始化Jackson序列化器，指定泛型为Object
+        Jackson2JsonRedisSerializer<Object> jacksonSerializer = new Jackson2JsonRedisSerializer<>(Object.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // 2. 核心：设置类型序列化规则（取消数组强制包装，改用PROPERTY方式）
+        objectMapper.activateDefaultTyping(
+                LaissezFaireSubTypeValidator.instance,
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY // 关键：替换默认的WRAPPER_ARRAY，避免期望数组
+        );
+
+        // 3. 兼容Java 8时间类型（解决Order/Property中LocalDateTime序列化问题）
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // 4. 将配置好的ObjectMapper绑定到序列化器
+        jacksonSerializer.setObjectMapper(objectMapper);
+        // ========== 结束修改 ==========
 
         // Use StringRedisSerializer for key serialization
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
+        // 5. 替换原JACKSON_SERIALIZER为配置好的jacksonSerializer
         template.setKeySerializer(stringRedisSerializer);
-        template.setValueSerializer(JACKSON_SERIALIZER);
+        template.setValueSerializer(jacksonSerializer); // 原代码是JACKSON_SERIALIZER，替换为配置后的实例
         template.setHashKeySerializer(stringRedisSerializer);
-        template.setHashValueSerializer(JACKSON_SERIALIZER);
+        template.setHashValueSerializer(jacksonSerializer); // 同上
         template.afterPropertiesSet();
 
         return template;
