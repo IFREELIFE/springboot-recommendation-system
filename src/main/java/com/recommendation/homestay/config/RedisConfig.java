@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -24,6 +26,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Configuration
 @EnableCaching
@@ -31,6 +35,13 @@ public class RedisConfig {
 
     private static final Jackson2JsonRedisSerializer<Object> JACKSON_SERIALIZER = createJacksonSerializer();
     private static final String[] KNOWN_CACHES = {"properties", "popularProperties", "topRatedProperties"};
+    private static final ExecutorService CACHE_CLEAR_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r);
+        t.setName("cache-clear");
+        t.setDaemon(true);
+        return t;
+    });
+    private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
 
     @Value("${cache.clear-on-startup:true}")
     private boolean clearCachesOnStartup;
@@ -74,7 +85,14 @@ public class RedisConfig {
     public ApplicationRunner cacheClearRunner(CacheManager cacheManager) {
         return args -> {
             if (clearCachesOnStartup) {
-                CompletableFuture.runAsync(() -> clearCaches(cacheManager));
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        clearCaches(cacheManager);
+                        log.info("Cache clear on startup completed");
+                    } catch (Exception ex) {
+                        log.warn("Cache clear on startup failed", ex);
+                    }
+                }, CACHE_CLEAR_EXECUTOR);
             }
         };
     }
