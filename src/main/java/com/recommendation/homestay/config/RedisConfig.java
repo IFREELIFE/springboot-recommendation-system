@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -25,6 +26,9 @@ public class RedisConfig {
 
     private static final Jackson2JsonRedisSerializer<Object> JACKSON_SERIALIZER = createJacksonSerializer();
     private static final String[] KNOWN_CACHES = {"properties", "popularProperties", "topRatedProperties"};
+
+    @Value("${cache.clear-on-startup:true}")
+    private boolean clearCachesOnStartup;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -58,10 +62,18 @@ public class RedisConfig {
                 .cacheDefaults(config)
                 .build();
 
-        for (String cacheName : KNOWN_CACHES) {
-            Cache cache = cacheManager.getCache(cacheName);
-            if (cache != null) {
-                cache.clear();
+        if (clearCachesOnStartup) {
+            cacheManager.getCacheNames().forEach(name -> {
+                Cache cache = cacheManager.getCache(name);
+                if (cache != null) {
+                    cache.clear();
+                }
+            });
+            for (String cacheName : KNOWN_CACHES) {
+                Cache cache = cacheManager.getCache(cacheName);
+                if (cache != null) {
+                    cache.clear();
+                }
             }
         }
 
