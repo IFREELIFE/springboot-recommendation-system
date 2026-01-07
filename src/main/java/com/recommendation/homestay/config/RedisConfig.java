@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -52,9 +53,18 @@ public class RedisConfig {
                         JACKSON_SERIALIZER))
                 .disableCachingNullValues();
 
-        return RedisCacheManager.builder(connectionFactory)
+        RedisCacheManager cacheManager = RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)
                 .build();
+
+        for (String cacheName : new String[]{"properties", "popularProperties", "topRatedProperties"}) {
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache != null) {
+                cache.clear();
+            }
+        }
+
+        return cacheManager;
     }
 
     private static Jackson2JsonRedisSerializer<Object> createJacksonSerializer() {
