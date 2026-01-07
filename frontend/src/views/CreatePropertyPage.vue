@@ -151,6 +151,7 @@ const loading = ref(false)
 const uploading = ref(false)
 const fileList = ref([])
 const uploadedImages = ref([])
+const propertyIdPattern = /^[1-9][0-9]*$/
 const propertyId = computed(() => (route.query.id ? String(route.query.id) : ''))
 const isEdit = computed(() => Boolean(propertyId.value))
 
@@ -199,7 +200,7 @@ const parseAmenities = (value) => {
 
 const parseImages = (data) => {
   if (data?.imagesBase64?.length) {
-    return data.imagesBase64.map((b64) => `data:image/*;base64,${b64}`)
+    return data.imagesBase64.map((b64) => `data:image/jpeg;base64,${b64}`)
   }
   if (data?.images) {
     try {
@@ -305,7 +306,7 @@ const handleSubmit = async () => {
 
 onMounted(() => {
   if (isEdit.value) {
-    if (!/^[1-9][0-9]*$/.test(propertyId.value)) {
+    if (!propertyIdPattern.test(propertyId.value)) {
       ElMessage.error('房源信息无效')
       router.push('/my-properties')
       return
