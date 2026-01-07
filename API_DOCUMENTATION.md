@@ -177,7 +177,7 @@ Authorization: Bearer {token}
 
 ### 5.1 上传房源图片 (Upload Property Images) - 需要 LANDLORD 角色
 
-**Endpoint**: `POST /api/properties/upload-images`
+**Endpoint**: `POST /api/properties/upload`
 
 **Headers**:
 ```
@@ -194,8 +194,8 @@ Content-Type: multipart/form-data
   "success": true,
   "message": "Images uploaded successfully",
   "data": [
-    "/api/uploads/8d08c2a1f0d84e39bd1f98f0a524bba1.jpg",
-    "/api/uploads/9e9f22c541cf4b338c05a62012d613ab.png"
+    "/uploads/8d08c2a1f0d84e39bd1f98f0a524bba1.jpg",
+    "/uploads/9e9f22c541cf4b338c05a62012d613ab.png"
   ]
 }
 ```

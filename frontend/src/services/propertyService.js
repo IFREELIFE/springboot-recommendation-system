@@ -41,7 +41,7 @@ const propertyService = {
     files.forEach((file) => {
       formData.append('files', file)
     })
-    const response = await api.post('/properties/upload-images', formData, {
+    const response = await api.post('/properties/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

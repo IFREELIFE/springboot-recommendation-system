@@ -12,7 +12,7 @@ public class UploadUtils {
             customDir = System.getenv("HOMESTAY_UPLOAD_DIR");
         }
         if (customDir == null || customDir.isBlank()) {
-            UPLOAD_DIR = Paths.get(System.getProperty("user.home"), "homestay-uploads");
+            UPLOAD_DIR = Paths.get("E:\\develepument");
         } else {
             UPLOAD_DIR = Paths.get(customDir);
         }
