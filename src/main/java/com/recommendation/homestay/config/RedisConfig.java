@@ -22,7 +22,7 @@ import java.time.Duration;
 @EnableCaching
 public class RedisConfig {
 
-    private final Jackson2JsonRedisSerializer<Object> jacksonSerializer = createJacksonSerializer();
+    private static final Jackson2JsonRedisSerializer<Object> JACKSON_SERIALIZER = createJacksonSerializer();
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -35,9 +35,9 @@ public class RedisConfig {
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
         template.setKeySerializer(stringRedisSerializer);
-        template.setValueSerializer(jacksonSerializer);
+        template.setValueSerializer(JACKSON_SERIALIZER);
         template.setHashKeySerializer(stringRedisSerializer);
-        template.setHashValueSerializer(jacksonSerializer);
+        template.setHashValueSerializer(JACKSON_SERIALIZER);
         template.afterPropertiesSet();
 
         return template;
@@ -49,7 +49,7 @@ public class RedisConfig {
                 .entryTtl(Duration.ofHours(1))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                        jacksonSerializer))
+                        JACKSON_SERIALIZER))
                 .disableCachingNullValues();
 
         return RedisCacheManager.builder(connectionFactory)
@@ -57,7 +57,7 @@ public class RedisConfig {
                 .build();
     }
 
-    private Jackson2JsonRedisSerializer<Object> createJacksonSerializer() {
+    private static Jackson2JsonRedisSerializer<Object> createJacksonSerializer() {
         Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(Object.class);
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
