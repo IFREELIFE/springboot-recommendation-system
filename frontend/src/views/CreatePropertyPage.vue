@@ -199,8 +199,15 @@ const parseAmenities = (value) => {
 }
 
 const parseImages = (data) => {
+  const getBase64Mime = (b64) => {
+    if (!b64) return 'image/jpeg'
+    if (b64.startsWith('/9j/')) return 'image/jpeg'
+    if (b64.startsWith('iVBORw0KGgo')) return 'image/png'
+    return 'image/jpeg'
+  }
+
   if (data?.imagesBase64?.length) {
-    return data.imagesBase64.map((b64) => `data:image/jpeg;base64,${b64}`)
+    return data.imagesBase64.map((b64) => `data:${getBase64Mime(b64)};base64,${b64}`)
   }
   if (data?.images) {
     try {
