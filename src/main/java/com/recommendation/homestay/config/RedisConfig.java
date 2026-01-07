@@ -22,21 +22,22 @@ import java.time.Duration;
 @EnableCaching
 public class RedisConfig {
 
+    private final Jackson2JsonRedisSerializer<Object> jacksonSerializer = createJacksonSerializer();
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
         // Use Jackson2JsonRedisSerializer for value serialization
-        Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = jacksonSerializer();
 
         // Use StringRedisSerializer for key serialization
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
         template.setKeySerializer(stringRedisSerializer);
-        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setValueSerializer(jacksonSerializer);
         template.setHashKeySerializer(stringRedisSerializer);
-        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashValueSerializer(jacksonSerializer);
         template.afterPropertiesSet();
 
         return template;
@@ -44,13 +45,11 @@ public class RedisConfig {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = jacksonSerializer();
-
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofHours(1))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                        jackson2JsonRedisSerializer))
+                        jacksonSerializer))
                 .disableCachingNullValues();
 
         return RedisCacheManager.builder(connectionFactory)
@@ -58,7 +57,7 @@ public class RedisConfig {
                 .build();
     }
 
-    private Jackson2JsonRedisSerializer<Object> jacksonSerializer() {
+    private Jackson2JsonRedisSerializer<Object> createJacksonSerializer() {
         Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(Object.class);
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
