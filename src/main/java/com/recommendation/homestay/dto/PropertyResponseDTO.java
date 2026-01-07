@@ -28,5 +28,6 @@ public class PropertyResponseDTO {
     private Integer bookingCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String images;
     private List<String> imagesBase64;
 }

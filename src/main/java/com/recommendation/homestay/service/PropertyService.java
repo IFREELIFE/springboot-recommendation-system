@@ -99,7 +99,7 @@ public class PropertyService {
     }
 
     @Transactional
-    @CacheEvict(value = "properties", allEntries = true)
+    @CacheEvict(value = "properties", key = "#propertyId")
     public Property appendImages(Long propertyId, List<String> newImages) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
@@ -227,6 +227,7 @@ public class PropertyService {
         dto.setBookingCount(property.getBookingCount());
         dto.setCreatedAt(property.getCreatedAt());
         dto.setUpdatedAt(property.getUpdatedAt());
+        dto.setImages(property.getImages());
 
         List<String> base64List = new ArrayList<>();
         List<String> paths = new ArrayList<>();
