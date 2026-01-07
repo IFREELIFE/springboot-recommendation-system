@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>发布新房源</span>
+          <span>{{ isEdit ? '编辑房源' : '发布新房源' }}</span>
         </div>
       </template>
       <el-form
@@ -129,7 +129,7 @@
 
         <el-form-item>
           <el-button type="primary" size="large" :loading="loading" @click="handleSubmit">
-            发布房源
+            {{ isEdit ? '保存修改' : '发布房源' }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -138,18 +138,20 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import propertyService from '../services/propertyService'
 
+const route = useRoute()
 const router = useRouter()
 const formRef = ref()
 const loading = ref(false)
 const uploading = ref(false)
 const fileList = ref([])
 const uploadedImages = ref([])
+const isEdit = computed(() => Boolean(route.query.id))
 
 const form = reactive({
   title: '',
@@ -179,6 +181,60 @@ const rules = {
 
 const handleFileChange = (file, files) => {
   fileList.value = files
+}
+
+const parseAmenities = (value) => {
+  if (!value) return ''
+  if (Array.isArray(value)) return value.join(',')
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.join(',') : ''
+  } catch (e) {
+    return ''
+  }
+}
+
+const parseImages = (data) => {
+  if (data?.imagesBase64?.length) {
+    return data.imagesBase64.map((b64) => `data:image/*;base64,${b64}`)
+  }
+  if (data?.images) {
+    try {
+      const parsed = JSON.parse(data.images)
+      return Array.isArray(parsed) ? parsed : []
+    } catch (e) {
+      return []
+    }
+  }
+  return []
+}
+
+const loadProperty = async (id) => {
+  loading.value = true
+  try {
+    const response = await propertyService.getPropertyById(id)
+    if (response.success) {
+      const data = response.data || {}
+      form.title = data.title || ''
+      form.description = data.description || ''
+      form.city = data.city || ''
+      form.district = data.district || ''
+      form.address = data.address || ''
+      form.price = data.price ?? 0
+      form.bedrooms = data.bedrooms ?? 1
+      form.bathrooms = data.bathrooms ?? 1
+      form.maxGuests = data.maxGuests ?? 1
+      form.propertyType = data.propertyType || ''
+      form.amenities = parseAmenities(data.amenities)
+      uploadedImages.value = parseImages(data)
+    } else {
+      ElMessage.error('房源信息获取失败')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '加载房源信息失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 const uploadImages = async () => {
@@ -220,19 +276,28 @@ const handleSubmit = async () => {
             : '[]'
         }
 
-        const response = await propertyService.createProperty(propertyData)
+        const response = isEdit.value
+          ? await propertyService.updateProperty(route.query.id, propertyData)
+          : await propertyService.createProperty(propertyData)
+
         if (response.success) {
-          ElMessage.success('房源发布成功！')
+          ElMessage.success(isEdit.value ? '房源更新成功！' : '房源发布成功！')
           router.push('/my-properties')
         }
       } catch (error) {
-        ElMessage.error(error.message || '发布失败，请重试')
+        ElMessage.error(error.message || '保存失败，请重试')
       } finally {
         loading.value = false
       }
     }
   })
 }
+
+onMounted(() => {
+  if (isEdit.value) {
+    loadProperty(route.query.id)
+  }
+})
 </script>
 
 <style scoped>

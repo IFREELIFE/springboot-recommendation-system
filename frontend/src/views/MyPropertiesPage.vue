@@ -98,7 +98,7 @@ const fetchProperties = async () => {
 }
 
 const handleEdit = (id) => {
-  ElMessage.info('编辑功能开发中')
+  router.push({ name: 'CreateProperty', query: { id } })
 }
 
 const handleDelete = async (id) => {
