@@ -94,10 +94,11 @@ public class PropertyService {
     }
 
     @Transactional
+    @CacheEvict(value = "properties", allEntries = true)
     public Property appendImages(Long propertyId, List<String> newImages) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
-            throw new IllegalArgumentException("Property not found with ID: " + propertyId);
+            throw new RuntimeException("Property not found with ID: " + propertyId);
         }
         List<String> merged = new ArrayList<>();
         try {
