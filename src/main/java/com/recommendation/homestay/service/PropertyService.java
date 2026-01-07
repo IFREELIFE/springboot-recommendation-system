@@ -97,7 +97,7 @@ public class PropertyService {
     public Property appendImages(Long propertyId, List<String> newImages) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
-            throw new RuntimeException("Property not found with ID: " + propertyId);
+            throw new IllegalArgumentException("Property not found with ID: " + propertyId);
         }
         List<String> merged = new ArrayList<>();
         try {
@@ -112,7 +112,7 @@ public class PropertyService {
         try {
             property.setImages(objectMapper.writeValueAsString(merged));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to save images: " + e.getMessage(), e);
+            throw new IllegalStateException("Failed to save images: " + e.getMessage(), e);
         }
         propertyMapper.updateById(property);
         return property;

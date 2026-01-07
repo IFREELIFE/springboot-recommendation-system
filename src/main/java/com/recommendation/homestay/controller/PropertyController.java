@@ -16,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.validation.Valid;
 import java.io.IOException;
@@ -40,6 +42,7 @@ public class PropertyController {
     private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".webp"));
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     private static final int MAX_FILES = 10;
+    private static final Logger log = LoggerFactory.getLogger(PropertyController.class);
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -123,8 +126,9 @@ public class PropertyController {
                 try {
                     propertyService.appendImages(propertyId, imageUrls);
                 } catch (Exception e) {
+                    log.error("Failed to append images to property {}", propertyId, e);
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ApiResponse(false, "图片保存到房源失败: " + e.getMessage()));
+                            .body(new ApiResponse(false, "图片保存到房源失败，请稍后重试"));
                 }
             }
 
