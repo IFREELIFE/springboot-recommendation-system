@@ -7,6 +7,7 @@ import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyRequest;
 import com.recommendation.homestay.dto.PropertyResponseDTO;
 import com.recommendation.homestay.entity.Property;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.PropertyService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 
 import javax.validation.Valid;
 import java.io.IOException;
@@ -40,6 +42,9 @@ public class PropertyController {
     @Autowired
     private PropertyService propertyService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".webp"));
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     private static final int MAX_FILES = 10;
@@ -57,6 +62,73 @@ public class PropertyController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @PostMapping(value = "/with-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    public ResponseEntity<?> createPropertyWithImages(
+            @RequestPart("request") @Valid PropertyRequest request,
+            @RequestPart(value = "files", required = false) MultipartFile[] files,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        if (files == null || files.length == 0) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "请至少上传一张图片"));
+        }
+        if (files.length > MAX_FILES) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "一次最多上传" + MAX_FILES + "张图片"));
+        }
+        try {
+            Path uploadDir = UploadUtils.getUploadDir().normalize();
+            Files.createDirectories(uploadDir);
+
+            List<String> imageUrls = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (file == null || file.isEmpty()) {
+                    continue;
+                }
+                String originalFilename = file.getOriginalFilename();
+                if (originalFilename == null || originalFilename.isBlank()) {
+                    return ResponseEntity.badRequest().body(new ApiResponse(false, "文件名无效"));
+                }
+                originalFilename = StringUtils.cleanPath(originalFilename);
+                String extension = "";
+                int dotIndex = originalFilename.lastIndexOf(".");
+                if (dotIndex != -1) {
+                    extension = originalFilename.substring(dotIndex);
+                }
+                if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(false, "仅支持上传图片格式：" + ALLOWED_EXTENSIONS));
+                }
+                if (file.getSize() > MAX_FILE_SIZE) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(false, "单个文件大小不能超过10MB"));
+                }
+                String filename = UUID.randomUUID().toString() + extension;
+                Path targetPath = uploadDir.resolve(filename).normalize();
+                if (!targetPath.startsWith(uploadDir)) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(false, "文件路径无效"));
+                }
+                file.transferTo(targetPath.toFile());
+                imageUrls.add("/api/uploads/" + filename);
+            }
+
+            if (imageUrls.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "上传的图片无效"));
+            }
+
+            request.setImages(objectMapper.writeValueAsString(imageUrls));
+            Property property = propertyService.createProperty(request, currentUser.getId());
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse(true, "Property created successfully", property));
+        } catch (Exception e) {
+            log.error("创建房源并上传图片失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "创建房源失败，请稍后重试"));
         }
     }
 
