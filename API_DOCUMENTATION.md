@@ -187,6 +187,7 @@ Content-Type: multipart/form-data
 
 **Request**:
 - `files`: 多张图片文件，使用相同的字段名 `files` 传递
+- `propertyId` (可选): 若传入，将在上传成功后把图片地址追加保存到该房源的 `images` 字段
 
 **Response**:
 ```json

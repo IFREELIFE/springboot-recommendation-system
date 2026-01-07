@@ -8,6 +8,8 @@ import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.PropertyMapper;
 import com.recommendation.homestay.mapper.UserMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 public class PropertyService {
@@ -25,6 +28,9 @@ public class PropertyService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Transactional
     @CacheEvict(value = "properties", allEntries = true)
@@ -79,6 +85,31 @@ public class PropertyService {
         property.setAmenities(request.getAmenities());
         property.setImages(request.getImages());
 
+        propertyMapper.updateById(property);
+        return property;
+    }
+
+    @Transactional
+    public Property appendImages(Long propertyId, List<String> newImages) {
+        Property property = propertyMapper.selectById(propertyId);
+        if (property == null) {
+            throw new RuntimeException("Property not found");
+        }
+        List<String> merged = new ArrayList<>();
+        try {
+            if (property.getImages() != null && !property.getImages().isBlank()) {
+                merged.addAll(objectMapper.readValue(property.getImages(), new TypeReference<List<String>>() {
+                }));
+            }
+        } catch (Exception ignored) {
+            // fallback to empty list if parsing fails
+        }
+        merged.addAll(newImages);
+        try {
+            property.setImages(objectMapper.writeValueAsString(merged));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save images");
+        }
         propertyMapper.updateById(property);
         return property;
     }

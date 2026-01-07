@@ -58,7 +58,8 @@ public class PropertyController {
 
     @PostMapping("/upload")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
-    public ResponseEntity<?> uploadPropertyImages(@RequestParam("files") MultipartFile[] files) {
+    public ResponseEntity<?> uploadPropertyImages(@RequestParam("files") MultipartFile[] files,
+                                                  @RequestParam(value = "propertyId", required = false) Long propertyId) {
         if (files == null || files.length == 0) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, "请至少选择一张图片"));
@@ -116,6 +117,15 @@ public class PropertyController {
             if (imageUrls.isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse(false, "上传的图片无效"));
+            }
+
+            if (propertyId != null) {
+                try {
+                    propertyService.appendImages(propertyId, imageUrls);
+                } catch (Exception e) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(new ApiResponse(false, "图片保存到房源失败: " + e.getMessage()));
+                }
             }
 
             return ResponseEntity.ok(new ApiResponse(true, "图片上传成功", imageUrls));
