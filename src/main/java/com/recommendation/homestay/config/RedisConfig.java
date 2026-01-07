@@ -63,21 +63,21 @@ public class RedisConfig {
                 .build();
 
         if (clearCachesOnStartup) {
-            cacheManager.getCacheNames().forEach(name -> {
-                Cache cache = cacheManager.getCache(name);
-                if (cache != null) {
-                    cache.clear();
-                }
-            });
-            for (String cacheName : KNOWN_CACHES) {
-                Cache cache = cacheManager.getCache(cacheName);
-                if (cache != null) {
-                    cache.clear();
-                }
-            }
+            clearCaches(cacheManager);
         }
 
         return cacheManager;
+    }
+
+    private void clearCaches(CacheManager cacheManager) {
+        java.util.Set<String> cacheNames = new java.util.LinkedHashSet<>(cacheManager.getCacheNames());
+        java.util.Collections.addAll(cacheNames, KNOWN_CACHES);
+        cacheNames.forEach(name -> {
+            Cache cache = cacheManager.getCache(name);
+            if (cache != null) {
+                cache.clear();
+            }
+        });
     }
 
     private static Jackson2JsonRedisSerializer<Object> createJacksonSerializer() {
