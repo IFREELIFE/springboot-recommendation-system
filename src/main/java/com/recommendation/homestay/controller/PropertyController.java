@@ -1,6 +1,7 @@
 package com.recommendation.homestay.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.recommendation.homestay.config.UploadUtils;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyRequest;
@@ -13,10 +14,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -25,6 +36,10 @@ public class PropertyController {
 
     @Autowired
     private PropertyService propertyService;
+
+    private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".webp"));
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final int MAX_FILES = 10;
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -38,6 +53,75 @@ public class PropertyController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @PostMapping("/upload")
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    public ResponseEntity<?> uploadPropertyImages(@RequestParam("files") MultipartFile[] files) {
+        if (files == null || files.length == 0) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "请至少选择一张图片"));
+        }
+        if (files.length > MAX_FILES) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "一次最多上传" + MAX_FILES + "张图片"));
+        }
+
+        try {
+            Path uploadDir = UploadUtils.getUploadDir().normalize();
+            try {
+                Files.createDirectories(uploadDir);
+            } catch (SecurityException se) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse(false, "无法创建上传目录"));
+            }
+
+            List<String> imageUrls = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) {
+                    continue;
+                }
+                String originalFilename = file.getOriginalFilename();
+                if (originalFilename == null || originalFilename.isBlank()) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(false, "文件名无效"));
+                }
+                originalFilename = StringUtils.cleanPath(originalFilename);
+
+                String extension = "";
+                int dotIndex = originalFilename.lastIndexOf(".");
+                if (dotIndex != -1) {
+                    extension = originalFilename.substring(dotIndex);
+                }
+                if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(false, "仅支持上传图片格式：" + ALLOWED_EXTENSIONS));
+                }
+                if (file.getSize() > MAX_FILE_SIZE) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(false, "单个文件大小不能超过10MB"));
+                }
+                String filename = UUID.randomUUID().toString() + extension;
+                Path targetPath = uploadDir.resolve(filename).normalize();
+                if (!targetPath.startsWith(uploadDir)) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(false, "文件路径无效"));
+                }
+                file.transferTo(targetPath.toFile());
+                imageUrls.add("/uploads/" + filename);
+            }
+
+            if (imageUrls.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "上传的图片无效"));
+            }
+
+            return ResponseEntity.ok(new ApiResponse(true, "图片上传成功", imageUrls));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "图片上传失败: " + e.getMessage()));
         }
     }
 

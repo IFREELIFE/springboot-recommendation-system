@@ -90,13 +90,24 @@
           />
         </el-form-item>
 
-        <el-form-item label="图片链接">
-          <el-input
-            v-model="form.images"
-            type="textarea"
-            :rows="3"
-            placeholder="多个图片链接请用逗号分隔"
-          />
+        <el-form-item label="房源图片">
+          <el-upload
+            ref="uploadRef"
+            class="upload-area"
+            drag
+            multiple
+            :auto-upload="false"
+            :file-list="fileList"
+            accept="image/*"
+            :on-change="handleFileChange"
+            :on-remove="handleFileRemove"
+          >
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">
+              将图片拖到此处，或<em>点击上传</em>
+            </div>
+            <div class="el-upload__tip">支持一次选择多张图片</div>
+          </el-upload>
         </el-form-item>
 
         <el-form-item>
@@ -113,11 +124,14 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue'
 import propertyService from '../services/propertyService'
 
 const router = useRouter()
 const formRef = ref()
 const loading = ref(false)
+const uploadRef = ref()
+const fileList = ref([])
 
 const form = reactive({
   title: '',
@@ -131,7 +145,7 @@ const form = reactive({
   maxGuests: 1,
   propertyType: '',
   amenities: '',
-  images: ''
+  images: []
 })
 
 const rules = {
@@ -145,6 +159,14 @@ const rules = {
   maxGuests: [{ required: true, message: '请输入最多可住人数', trigger: 'blur' }]
 }
 
+const handleFileChange = (_, uploadFiles) => {
+  fileList.value = uploadFiles
+}
+
+const handleFileRemove = (_, uploadFiles) => {
+  fileList.value = uploadFiles
+}
+
 const handleSubmit = async () => {
   if (!formRef.value) return
 
@@ -152,14 +174,34 @@ const handleSubmit = async () => {
     if (valid) {
       loading.value = true
       try {
+        let currentImages = Array.isArray(form.images) ? form.images : []
+        if (fileList.value.length > 0) {
+          const formData = new FormData()
+          let hasFile = false
+          fileList.value.forEach((file) => {
+            if (file.raw) {
+              formData.append('files', file.raw)
+              hasFile = true
+            }
+          })
+          if (!hasFile) {
+            throw new Error('请选择有效的图片文件')
+          }
+
+          const uploadResp = await propertyService.uploadImages(formData)
+          if (!uploadResp.success) {
+            throw new Error(uploadResp.message || '图片上传失败')
+          }
+          currentImages = uploadResp.data || []
+          form.images = currentImages
+        }
+
         const propertyData = {
           ...form,
           amenities: form.amenities
             ? JSON.stringify(form.amenities.split(',').map((a) => a.trim()))
             : '[]',
-          images: form.images
-            ? JSON.stringify(form.images.split(',').map((i) => i.trim()))
-            : '[]'
+          images: JSON.stringify(currentImages)
         }
 
         const response = await propertyService.createProperty(propertyData)
@@ -186,5 +228,9 @@ const handleSubmit = async () => {
 .card-header {
   font-size: 18px;
   font-weight: bold;
+}
+
+.upload-area {
+  width: 100%;
 }
 </style>
