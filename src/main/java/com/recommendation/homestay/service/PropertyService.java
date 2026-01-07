@@ -10,6 +10,8 @@ import com.recommendation.homestay.mapper.PropertyMapper;
 import com.recommendation.homestay.mapper.UserMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -22,6 +24,8 @@ import java.util.ArrayList;
 
 @Service
 public class PropertyService {
+
+    private static final Logger log = LoggerFactory.getLogger(PropertyService.class);
 
     @Autowired
     private PropertyMapper propertyMapper;
@@ -102,7 +106,7 @@ public class PropertyService {
                 }));
             }
         } catch (Exception ignored) {
-            // fallback to empty list if parsing fails
+            log.warn("Failed to parse existing images for property {}", propertyId);
         }
         merged.addAll(newImages);
         try {
