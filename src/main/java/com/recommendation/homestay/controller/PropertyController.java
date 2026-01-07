@@ -5,6 +5,7 @@ import com.recommendation.homestay.config.UploadUtils;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyRequest;
+import com.recommendation.homestay.dto.PropertyResponseDTO;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.PropertyService;
@@ -174,7 +175,8 @@ public class PropertyController {
         try {
             Property property = propertyService.getPropertyById(id);
             propertyService.incrementViewCount(id);
-            return ResponseEntity.ok(new ApiResponse(true, "Property retrieved successfully", property));
+            PropertyResponseDTO dto = propertyService.toResponseDTO(property);
+            return ResponseEntity.ok(new ApiResponse(true, "Property retrieved successfully", dto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse(false, e.getMessage()));

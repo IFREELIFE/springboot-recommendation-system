@@ -123,6 +123,7 @@
     "propertyType": "apartment",
     "amenities": "[\"WiFi\",\"Air Conditioning\"]",
     "images": "[\"image1.jpg\"]",
+    "imagesBase64": ["<base64 string>", "<base64 string>"],
     "available": true,
     "rating": 4.5,
     "reviewCount": 20,
