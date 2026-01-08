@@ -89,4 +89,3 @@
 | GET | `/api/orders/my-orders` | `page` `size` | 获取当前用户订单 | `PageResponse<Order>` |
 | PUT | `/api/orders/{id}/status` | 路径参数 id，`status`(枚举) | 更新订单状态 | 更新后的 `Order` |
 | DELETE | `/api/orders/{id}` | 路径参数 id | 取消订单 | 成功消息 |
-
