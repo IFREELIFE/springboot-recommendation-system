@@ -203,7 +203,7 @@ public class PropertyService {
                                           BigDecimal maxPrice, Integer bedrooms,
                                           int page, int size) {
         IPage<Property> esPage = searchFromElasticsearch(city, minPrice, maxPrice, bedrooms, page, size);
-        if (esPage != null) {
+        if (esPage != null && esPage.getTotal() > 0) {
             return esPage;
         }
 
