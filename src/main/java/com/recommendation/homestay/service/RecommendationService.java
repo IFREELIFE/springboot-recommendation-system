@@ -7,8 +7,6 @@ import com.recommendation.homestay.entity.UserPropertyInteraction;
 import com.recommendation.homestay.mapper.PropertyMapper;
 import com.recommendation.homestay.mapper.UserPropertyInteractionMapper;
 import com.recommendation.homestay.mapper.UserMapper;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
