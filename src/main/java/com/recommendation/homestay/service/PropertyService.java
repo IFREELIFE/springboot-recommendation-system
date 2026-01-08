@@ -39,6 +39,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -235,7 +236,7 @@ public class PropertyService {
                     .filter(QueryBuilders.termQuery("available", true));
 
             if (city != null) {
-                boolQuery.filter(QueryBuilders.termQuery("city", city));
+                boolQuery.filter(QueryBuilders.termQuery("city", normalizeCity(city)));
             }
             if (minPrice != null || maxPrice != null) {
                 BoolQueryBuilder range = QueryBuilders.boolQuery();
@@ -330,11 +331,15 @@ public class PropertyService {
         doc.setId(property.getId());
         doc.setTitle(property.getTitle());
         doc.setDescription(property.getDescription());
-        doc.setCity(property.getCity());
+        doc.setCity(normalizeCity(property.getCity()));
         doc.setPrice(property.getPrice());
         doc.setBedrooms(property.getBedrooms());
         doc.setAvailable(property.getAvailable());
         return doc;
+    }
+
+    private String normalizeCity(String city) {
+        return city == null ? null : city.toLowerCase(Locale.ROOT);
     }
 
     public PropertyResponseDTO toResponseDTO(Property property) {
