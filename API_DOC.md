@@ -2,7 +2,7 @@
 
 > 说明：以下列举所有 `controller` 接口的访问地址、方法、参数、作用及返回结果；推荐模块已单独重点标注。默认服务地址为 `http://localhost:8080`，如有自定义请替换为实际 host/port。
 
-- Swagger UI（推荐模块分组）：`http://localhost:8080/swagger-ui/index.html?urls.primaryName=recommendation`（springdoc 原生支持 `urls.primaryName` 选择分组）
+- Swagger UI（推荐模块分组）：`http://localhost:8080/swagger-ui/index.html?urls.primaryName=recommendation`（springdoc-openapi UI 支持使用 `urls.primaryName` 切换分组，参考 https://springdoc.org/#swagger-ui-properties）
 - Swagger UI（其他接口分组）：`http://localhost:8080/swagger-ui/index.html?urls.primaryName=other-apis`
 - OpenAPI JSON（推荐模块）：`http://localhost:8080/v3/api-docs/recommendation`
 - OpenAPI JSON（其他接口）：`http://localhost:8080/v3/api-docs/other-apis`
@@ -41,7 +41,7 @@
 
 | 方法 | 地址 | 接收参数 | 作用 | 返回结果 |
 | --- | --- | --- | --- | --- |
-| POST | `/api/auth/register` | `RegisterRequest`：username(string, 必填)、email(string, 必填)、password(string, 必填)、role(string, 可选) | 注册用户 | `userId` |
+| POST | `/api/auth/register` | `RegisterRequest`：username(string, 必填)、email(string, 必填)、password(string, 必填)、role(string, 可选，取值 USER/LANDLORD/ADMIN，默认 USER) | 注册用户 | `userId` |
 | POST | `/api/auth/login` | `LoginRequest`：username(string, 必填)、password(string, 必填) | 用户登录获取 JWT | `JwtResponse{token,tokenType,user}` |
 
 ---
@@ -87,5 +87,5 @@
 | GET | `/api/orders/{id}` | 路径参数 id | 按 ID 查询订单 | `Order` |
 | GET | `/api/orders/number/{orderNumber}` | 路径参数 orderNumber | 按订单号查询 | `Order` |
 | GET | `/api/orders/my-orders` | `page` `size` | 获取当前用户订单 | `PageResponse<Order>` |
-| PUT | `/api/orders/{id}/status` | 路径参数 id，`status`(枚举：PENDING/CONFIRMED/CANCELLED/COMPLETED) | 更新订单状态 | 更新后的 `Order` |
+| PUT | `/api/orders/{id}/status` | 路径参数 id，`status`(string，枚举：PENDING/CONFIRMED/CANCELLED/COMPLETED) | 更新订单状态 | 更新后的 `Order` |
 | DELETE | `/api/orders/{id}` | 路径参数 id | 取消订单 | 成功消息 |
