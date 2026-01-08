@@ -2,7 +2,7 @@
 
 > 说明：以下列举所有 `controller` 接口的访问地址、方法、参数、作用及返回结果；推荐模块已单独重点标注。默认服务地址为 `http://localhost:8080`，如有自定义请替换为实际 host/port。
 
-- Swagger UI（推荐模块分组）：`http://localhost:8080/swagger-ui/index.html?urls.primaryName=recommendation`
+- Swagger UI（推荐模块分组）：`http://localhost:8080/swagger-ui/index.html?urls.primaryName=recommendation`（springdoc 原生支持 `urls.primaryName` 选择分组）
 - Swagger UI（其他接口分组）：`http://localhost:8080/swagger-ui/index.html?urls.primaryName=other-apis`
 - OpenAPI JSON（推荐模块）：`http://localhost:8080/v3/api-docs/recommendation`
 - OpenAPI JSON（其他接口）：`http://localhost:8080/v3/api-docs/other-apis`
@@ -41,8 +41,8 @@
 
 | 方法 | 地址 | 接收参数 | 作用 | 返回结果 |
 | --- | --- | --- | --- | --- |
-| POST | `/api/auth/register` | `RegisterRequest{username,email,password,role...}` | 注册用户 | `userId` |
-| POST | `/api/auth/login` | `LoginRequest{username,password}` | 用户登录获取 JWT | `JwtResponse{token,tokenType,user}` |
+| POST | `/api/auth/register` | `RegisterRequest`：username(string, 必填)、email(string, 必填)、password(string, 必填)、role(string, 可选) | 注册用户 | `userId` |
+| POST | `/api/auth/login` | `LoginRequest`：username(string, 必填)、password(string, 必填) | 用户登录获取 JWT | `JwtResponse{token,tokenType,user}` |
 
 ---
 
@@ -59,18 +59,18 @@
 
 ## 房源模块
 
-路径前缀：`/api/properties`
+路径前缀：`/api/properties`。权限说明：除公开的 GET 查询外（详情、列表、搜索、热门、高评分），其余创建/上传/更新/删除/房东专属接口需房东或管理员角色。
 
 | 方法 | 地址 | 接收参数 | 作用 | 返回结果 |
 | --- | --- | --- | --- | --- |
-| POST | `/api/properties` | JSON `PropertyRequest`，需房东/管理员 | 创建房源 | `Property` |
-| POST | `/api/properties/with-upload` | `request`(PropertyRequest)、`files[]`，房东/管理员 | 创建房源并上传图片 | `Property` |
-| POST | `/api/properties/upload` | `files[]`，`propertyId`(可选)，房东/管理员 | 上传房源图片，附加到指定房源（可选） | 图片 URL 列表 |
-| PUT | `/api/properties/{id}` | `PropertyRequest`，房东/管理员 | 更新房源 | 更新后的 `Property` |
-| DELETE | `/api/properties/{id}` | 路径参数 id，房东/管理员 | 删除房源 | 成功消息 |
+| POST | `/api/properties` | JSON `PropertyRequest` | 创建房源（需房东/管理员） | `Property` |
+| POST | `/api/properties/with-upload` | `request`(PropertyRequest)、`files[]` | 创建房源并上传图片（需房东/管理员） | `Property` |
+| POST | `/api/properties/upload` | `files[]`，`propertyId`(可选) | 上传房源图片，附加到指定房源（需房东/管理员） | 图片 URL 列表 |
+| PUT | `/api/properties/{id}` | `PropertyRequest` | 更新房源（需房东/管理员） | 更新后的 `Property` |
+| DELETE | `/api/properties/{id}` | 路径参数 id | 删除房源（需房东/管理员） | 成功消息 |
 | GET | `/api/properties/{id}` | 路径参数 id | 获取房源详情并增加浏览量 | `PropertyResponseDTO` |
 | GET | `/api/properties` | `page` `size` | 分页获取房源列表 | `PageResponse<Property>` |
-| GET | `/api/properties/landlord/my-properties` | `page` `size`，房东/管理员 | 获取当前房东的房源 | `PageResponse<Property>` |
+| GET | `/api/properties/landlord/my-properties` | `page` `size` | 获取当前房东的房源（需房东/管理员） | `PageResponse<Property>` |
 | GET | `/api/properties/search` | `city` `minPrice` `maxPrice` `bedrooms` `page` `size` | 条件搜索房源 | `PageResponse<Property>` |
 | GET | `/api/properties/popular` | - | 获取热门房源 | 房源列表 |
 | GET | `/api/properties/top-rated` | - | 获取高评分房源 | 房源列表 |
@@ -87,5 +87,5 @@
 | GET | `/api/orders/{id}` | 路径参数 id | 按 ID 查询订单 | `Order` |
 | GET | `/api/orders/number/{orderNumber}` | 路径参数 orderNumber | 按订单号查询 | `Order` |
 | GET | `/api/orders/my-orders` | `page` `size` | 获取当前用户订单 | `PageResponse<Order>` |
-| PUT | `/api/orders/{id}/status` | 路径参数 id，`status`(枚举) | 更新订单状态 | 更新后的 `Order` |
+| PUT | `/api/orders/{id}/status` | 路径参数 id，`status`(枚举：PENDING/CONFIRMED/CANCELLED/COMPLETED) | 更新订单状态 | 更新后的 `Order` |
 | DELETE | `/api/orders/{id}` | 路径参数 id | 取消订单 | 成功消息 |
