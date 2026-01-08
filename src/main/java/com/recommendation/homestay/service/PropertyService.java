@@ -211,7 +211,8 @@ public class PropertyService {
         QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("available", true);
         if (city != null) {
-            queryWrapper.eq("city", city);
+            String normalizedCity = normalizeCity(city);
+            queryWrapper.apply("LOWER(city) = {0}", normalizedCity);
         }
         if (minPrice != null) {
             queryWrapper.ge("price", minPrice);
@@ -239,14 +240,12 @@ public class PropertyService {
                 boolQuery.filter(QueryBuilders.termQuery("city", normalizeCity(city)));
             }
             if (minPrice != null || maxPrice != null) {
-                BoolQueryBuilder range = QueryBuilders.boolQuery();
                 if (minPrice != null) {
-                    range.filter(QueryBuilders.rangeQuery("price").gte(minPrice));
+                    boolQuery.filter(QueryBuilders.rangeQuery("price").gte(minPrice));
                 }
                 if (maxPrice != null) {
-                    range.filter(QueryBuilders.rangeQuery("price").lte(maxPrice));
+                    boolQuery.filter(QueryBuilders.rangeQuery("price").lte(maxPrice));
                 }
-                boolQuery.filter(range);
             }
             if (bedrooms != null) {
                 boolQuery.filter(QueryBuilders.rangeQuery("bedrooms").gte(bedrooms));
@@ -260,7 +259,10 @@ public class PropertyService {
                     queryBuilder.build(), PropertyDocument.class);
 
             if (hits == null || hits.getTotalHits() == 0) {
-                return new Page<>(page + 1, size);
+                Page<Property> empty = new Page<>(page + 1, size);
+                empty.setTotal(0);
+                empty.setRecords(new ArrayList<>());
+                return empty;
             }
 
             List<Long> ids = hits.getSearchHits()
@@ -274,7 +276,10 @@ public class PropertyService {
             for (Long id : ids) {
                 order.put(id, idx++);
             }
-            records.sort(Comparator.comparingInt(p -> order.getOrDefault(p.getId(), Integer.MAX_VALUE)));
+            records = records.stream()
+                    .filter(p -> order.containsKey(p.getId()))
+                    .sorted(Comparator.comparingInt(p -> order.get(p.getId())))
+                    .collect(Collectors.toList());
 
             Page<Property> result = new Page<>(page + 1, size);
             result.setRecords(records);
