@@ -239,13 +239,11 @@ public class PropertyService {
             if (city != null) {
                 boolQuery.filter(QueryBuilders.termQuery("city", normalizeCity(city)));
             }
-            if (minPrice != null || maxPrice != null) {
-                if (minPrice != null) {
-                    boolQuery.filter(QueryBuilders.rangeQuery("price").gte(minPrice));
-                }
-                if (maxPrice != null) {
-                    boolQuery.filter(QueryBuilders.rangeQuery("price").lte(maxPrice));
-                }
+            if (minPrice != null) {
+                boolQuery.filter(QueryBuilders.rangeQuery("price").gte(minPrice));
+            }
+            if (maxPrice != null) {
+                boolQuery.filter(QueryBuilders.rangeQuery("price").lte(maxPrice));
             }
             if (bedrooms != null) {
                 boolQuery.filter(QueryBuilders.rangeQuery("bedrooms").gte(bedrooms));
@@ -276,6 +274,11 @@ public class PropertyService {
             for (Long id : ids) {
                 order.put(id, idx++);
             }
+            int missingCount = ids.size() - records.size();
+            if (missingCount > 0) {
+                log.warn("Elasticsearch returned {} ids not found in DB, consider re-syncing index", missingCount);
+            }
+
             records = records.stream()
                     .filter(p -> order.containsKey(p.getId()))
                     .sorted(Comparator.comparingInt(p -> order.get(p.getId())))

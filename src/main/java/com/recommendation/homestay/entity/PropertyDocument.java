@@ -23,7 +23,7 @@ public class PropertyDocument {
     @Field(type = FieldType.Keyword)
     private String city;
 
-    @Field(type = FieldType.Double)
+    @Field(type = FieldType.Scaled_Float, scalingFactor = 100)
     private BigDecimal price;
 
     @Field(type = FieldType.Integer)
