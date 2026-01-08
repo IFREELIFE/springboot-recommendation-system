@@ -10,6 +10,8 @@ import com.recommendation.homestay.entity.Property;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.PropertyService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +39,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/properties")
 @CrossOrigin(origins = "*", maxAge = 3600)
+@Tag(name = "Property", description = "房源管理与查询接口")
 public class PropertyController {
 
     @Autowired
@@ -52,6 +55,7 @@ public class PropertyController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "创建房源", description = "以JSON请求创建房源信息")
     public ResponseEntity<?> createProperty(
             @Valid @RequestBody PropertyRequest request,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -67,6 +71,7 @@ public class PropertyController {
 
     @PostMapping(value = "/with-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "创建房源并上传图片", description = "提交房源信息和图片文件完成创建")
     public ResponseEntity<?> createPropertyWithImages(
             @RequestPart("request") @Valid PropertyRequest request,
             @RequestPart(value = "files", required = false) MultipartFile[] files,
@@ -134,6 +139,7 @@ public class PropertyController {
 
     @PostMapping("/upload")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "上传房源图片", description = "单独上传房源图片，可选关联已有房源")
     public ResponseEntity<?> uploadPropertyImages(@RequestParam("files") MultipartFile[] files,
                                                   @RequestParam(value = "propertyId", required = false) Long propertyId) {
         if (files == null || files.length == 0) {
@@ -215,6 +221,7 @@ public class PropertyController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "更新房源", description = "根据ID更新房源基本信息")
     public ResponseEntity<?> updateProperty(
             @PathVariable Long id,
             @Valid @RequestBody PropertyRequest request,
@@ -230,6 +237,7 @@ public class PropertyController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "删除房源", description = "根据ID删除房源")
     public ResponseEntity<?> deleteProperty(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -243,6 +251,7 @@ public class PropertyController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "获取房源详情", description = "根据ID返回房源信息并增加浏览量")
     public ResponseEntity<?> getProperty(@PathVariable Long id) {
         try {
             Property property = propertyService.getPropertyById(id);
@@ -256,6 +265,7 @@ public class PropertyController {
     }
 
     @GetMapping
+    @Operation(summary = "分页获取房源列表", description = "按分页参数返回所有房源")
     public ResponseEntity<?> getAllProperties(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -276,6 +286,7 @@ public class PropertyController {
 
     @GetMapping("/landlord/my-properties")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "获取我的房源", description = "房东查看自己发布的房源列表")
     public ResponseEntity<?> getMyProperties(
             @AuthenticationPrincipal UserPrincipal currentUser,
             @RequestParam(defaultValue = "0") int page,
@@ -292,6 +303,7 @@ public class PropertyController {
 
     // 确保searchProperties也返回PageResponse（而非IPage）
     @GetMapping("/search")
+    @Operation(summary = "搜索房源", description = "按城市、价格、卧室数等条件搜索房源")
     public ResponseEntity<?> searchProperties(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) BigDecimal minPrice,
@@ -310,6 +322,7 @@ public class PropertyController {
     }
 
     @GetMapping("/popular")
+    @Operation(summary = "热门房源", description = "获取浏览量较高的房源列表")
     public ResponseEntity<?> getPopularProperties() {
         try {
             List<Property> properties = propertyService.getPopularProperties();
@@ -321,6 +334,7 @@ public class PropertyController {
     }
 
     @GetMapping("/top-rated")
+    @Operation(summary = "高评分房源", description = "获取评分较高的房源列表")
     public ResponseEntity<?> getTopRatedProperties() {
         try {
             List<Property> properties = propertyService.getTopRatedProperties();

@@ -7,6 +7,8 @@ import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.entity.Order;
 import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.OrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +22,14 @@ import javax.validation.Valid;
 @RequestMapping("/api/orders")
 @CrossOrigin(origins = "*", maxAge = 3600)
 @PreAuthorize("isAuthenticated()")
+@Tag(name = "Order", description = "订单管理接口")
 public class OrderController {
 
     @Autowired
     private OrderService orderService;
 
     @PostMapping
+    @Operation(summary = "创建订单", description = "为当前用户创建新的订单")
     public ResponseEntity<?> createOrder(
             @Valid @RequestBody OrderRequest request,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -40,6 +44,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "按ID获取订单", description = "根据订单ID返回订单详情")
     public ResponseEntity<?> getOrder(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -53,6 +58,7 @@ public class OrderController {
     }
 
     @GetMapping("/number/{orderNumber}")
+    @Operation(summary = "按编号获取订单", description = "根据订单编号查询订单")
     public ResponseEntity<?> getOrderByNumber(
             @PathVariable String orderNumber,
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -66,6 +72,7 @@ public class OrderController {
     }
 
     @GetMapping("/my-orders")
+    @Operation(summary = "分页获取我的订单", description = "返回当前用户的订单列表")
     public ResponseEntity<?> getMyOrders(
             @AuthenticationPrincipal UserPrincipal currentUser,
             @RequestParam(defaultValue = "0") int page,
@@ -81,6 +88,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/status")
+    @Operation(summary = "更新订单状态", description = "更新订单的状态，如已支付、取消等")
     public ResponseEntity<?> updateOrderStatus(
             @PathVariable Long id,
             @RequestParam Order.OrderStatus status,
@@ -95,6 +103,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "取消订单", description = "取消指定订单")
     public ResponseEntity<?> cancelOrder(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser) {

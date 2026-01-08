@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .and()
                 // 权限规则（原有正确配置保留）
                 .authorizeRequests()
+                .antMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/search/**").permitAll()

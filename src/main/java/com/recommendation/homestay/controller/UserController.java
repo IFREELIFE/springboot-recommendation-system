@@ -6,6 +6,8 @@ import com.recommendation.homestay.dto.UpdateUserRequest;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.UserMapper;
 import com.recommendation.homestay.security.UserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +22,7 @@ import javax.validation.Valid;
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*", maxAge = 3600)
 @PreAuthorize("isAuthenticated()")
+@Tag(name = "User", description = "用户个人信息接口")
 public class UserController {
 
     @Autowired
@@ -29,6 +32,7 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
 
     @GetMapping("/me")
+    @Operation(summary = "获取个人信息", description = "返回当前登录用户的个人资料")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserPrincipal currentUser) {
         User user = userMapper.selectById(currentUser.getId());
         if (user == null) {
@@ -39,6 +43,7 @@ public class UserController {
     }
 
     @PutMapping("/me")
+    @Operation(summary = "更新个人信息", description = "修改当前登录用户的基本资料与密码")
     public ResponseEntity<?> updateProfile(
             @Valid @RequestBody UpdateUserRequest request,
             @AuthenticationPrincipal UserPrincipal currentUser) {
