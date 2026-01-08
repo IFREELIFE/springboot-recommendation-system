@@ -3,30 +3,43 @@ package com.recommendation.homestay.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recommendation.homestay.config.UploadUtils;
 import com.recommendation.homestay.dto.PropertyRequest;
 import com.recommendation.homestay.dto.PropertyResponseDTO;
 import com.recommendation.homestay.entity.Property;
+import com.recommendation.homestay.entity.PropertyDocument;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.PropertyMapper;
 import com.recommendation.homestay.mapper.UserMapper;
-import com.recommendation.homestay.config.UploadUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recommendation.homestay.repository.PropertyDocumentRepository;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.ArrayList;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class PropertyService {
@@ -41,6 +54,12 @@ public class PropertyService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired(required = false)
+    private ElasticsearchOperations elasticsearchOperations;
+
+    @Autowired(required = false)
+    private PropertyDocumentRepository propertyDocumentRepository;
 
     @Transactional
     @CacheEvict(value = {"popularProperties", "topRatedProperties"}, allEntries = true)
@@ -67,6 +86,7 @@ public class PropertyService {
         property.setAvailable(true);
 
         propertyMapper.insert(property);
+        indexToElasticsearch(property);
         return property;
     }
 
@@ -99,6 +119,7 @@ public class PropertyService {
         property.setImages(request.getImages());
 
         propertyMapper.updateById(property);
+        indexToElasticsearch(property);
         return property;
     }
 
@@ -147,6 +168,7 @@ public class PropertyService {
         }
 
         propertyMapper.deleteById(propertyId);
+        removeFromElasticsearch(propertyId);
     }
 
     @Cacheable(value = "properties", key = "#propertyId")
@@ -176,9 +198,14 @@ public class PropertyService {
         return propertyMapper.selectPage(pageParam, queryWrapper);
     }
 
-    public IPage<Property> searchProperties(String city, BigDecimal minPrice, 
-                                          BigDecimal maxPrice, Integer bedrooms, 
+    public IPage<Property> searchProperties(String city, BigDecimal minPrice,
+                                          BigDecimal maxPrice, Integer bedrooms,
                                           int page, int size) {
+        IPage<Property> esPage = searchFromElasticsearch(city, minPrice, maxPrice, bedrooms, page, size);
+        if (esPage != null) {
+            return esPage;
+        }
+
         Page<Property> pageParam = new Page<>(page + 1, size);
         QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("available", true);
@@ -197,6 +224,67 @@ public class PropertyService {
         return propertyMapper.selectPage(pageParam, queryWrapper);
     }
 
+    private IPage<Property> searchFromElasticsearch(String city, BigDecimal minPrice,
+                                                    BigDecimal maxPrice, Integer bedrooms,
+                                                    int page, int size) {
+        if (elasticsearchOperations == null || propertyDocumentRepository == null) {
+            return null;
+        }
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                    .filter(QueryBuilders.termQuery("available", true));
+
+            if (city != null) {
+                boolQuery.filter(QueryBuilders.termQuery("city", city));
+            }
+            if (minPrice != null || maxPrice != null) {
+                BoolQueryBuilder range = QueryBuilders.boolQuery();
+                if (minPrice != null) {
+                    range.filter(QueryBuilders.rangeQuery("price").gte(minPrice));
+                }
+                if (maxPrice != null) {
+                    range.filter(QueryBuilders.rangeQuery("price").lte(maxPrice));
+                }
+                boolQuery.filter(range);
+            }
+            if (bedrooms != null) {
+                boolQuery.filter(QueryBuilders.rangeQuery("bedrooms").gte(bedrooms));
+            }
+
+            NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder()
+                    .withQuery(boolQuery)
+                    .withPageable(PageRequest.of(page, size));
+
+            SearchHits<PropertyDocument> hits = elasticsearchOperations.search(
+                    queryBuilder.build(), PropertyDocument.class);
+
+            if (hits == null || hits.getTotalHits() == 0) {
+                return new Page<>(page + 1, size);
+            }
+
+            List<Long> ids = hits.getSearchHits()
+                    .stream()
+                    .map(h -> h.getContent().getId())
+                    .collect(Collectors.toList());
+
+            List<Property> records = propertyMapper.selectBatchIds(ids);
+            Map<Long, Integer> order = new HashMap<>();
+            int idx = 0;
+            for (Long id : ids) {
+                order.put(id, idx++);
+            }
+            records.sort(Comparator.comparingInt(p -> order.getOrDefault(p.getId(), Integer.MAX_VALUE)));
+
+            Page<Property> result = new Page<>(page + 1, size);
+            result.setRecords(records);
+            result.setTotal(hits.getTotalHits());
+            return result;
+        } catch (Exception e) {
+            log.warn("Elasticsearch search failed, fallback to DB search", e);
+            return null;
+        }
+    }
+
     @Cacheable(value = "popularProperties")
     public List<Property> getPopularProperties() {
         return propertyMapper.findTop10ByAvailableTrueOrderByBookingCountDesc();
@@ -213,6 +301,40 @@ public class PropertyService {
         if (result == 0) {
             throw new RuntimeException("Property not found");
         }
+    }
+
+    private void indexToElasticsearch(Property property) {
+        if (propertyDocumentRepository == null) {
+            return;
+        }
+        try {
+            propertyDocumentRepository.save(toDocument(property));
+        } catch (Exception e) {
+            log.warn("Failed to index property {} to Elasticsearch", property.getId(), e);
+        }
+    }
+
+    private void removeFromElasticsearch(Long propertyId) {
+        if (propertyDocumentRepository == null) {
+            return;
+        }
+        try {
+            propertyDocumentRepository.deleteById(propertyId);
+        } catch (Exception e) {
+            log.warn("Failed to remove property {} from Elasticsearch", propertyId, e);
+        }
+    }
+
+    private PropertyDocument toDocument(Property property) {
+        PropertyDocument doc = new PropertyDocument();
+        doc.setId(property.getId());
+        doc.setTitle(property.getTitle());
+        doc.setDescription(property.getDescription());
+        doc.setCity(property.getCity());
+        doc.setPrice(property.getPrice());
+        doc.setBedrooms(property.getBedrooms());
+        doc.setAvailable(property.getAvailable());
+        return doc;
     }
 
     public PropertyResponseDTO toResponseDTO(Property property) {
