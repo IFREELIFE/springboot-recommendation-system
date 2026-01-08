@@ -23,6 +23,7 @@ public class PropertyDocument {
     @Field(type = FieldType.Keyword)
     private String city;
 
+    // 使用 scaled float 保留两位小数（价格以分为最小单位）
     @Field(type = FieldType.Scaled_Float, scalingFactor = 100)
     private BigDecimal price;
 

@@ -276,7 +276,12 @@ public class PropertyService {
             }
             int missingCount = ids.size() - records.size();
             if (missingCount > 0) {
-                log.warn("Elasticsearch returned {} ids not found in DB, consider re-syncing index", missingCount);
+                List<Long> dbIds = records.stream().map(Property::getId).collect(Collectors.toList());
+                List<Long> missingIds = ids.stream()
+                        .filter(id -> !dbIds.contains(id))
+                        .collect(Collectors.toList());
+                log.warn("Elasticsearch returned {} ids not found in DB (sample: {}) , consider re-syncing index",
+                        missingCount, missingIds);
             }
 
             records = records.stream()
