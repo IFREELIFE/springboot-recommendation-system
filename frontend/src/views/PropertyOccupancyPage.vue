@@ -60,6 +60,7 @@ const pagination = reactive({
 const rows = computed(() =>
   properties.value.map((p) => {
     const rooms = Number(p.bedrooms || 0)
+    // Assumption: bookingCount reflects per-room bookings; adjust if data model changes
     const bookedRooms = Number(p.bookingCount || 0)
     const remainingRooms = Math.max(rooms - bookedRooms, 0)
     const occupancyRate = rooms > 0 ? `${((bookedRooms / rooms) * 100).toFixed(0)}%` : '0%'
