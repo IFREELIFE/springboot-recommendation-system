@@ -144,7 +144,7 @@ public class OrderService {
             throw new RuntimeException("Cancellation already requested and pending review");
         }
 
-        boolean hasStarted = !order.getCheckInDate().isAfter(LocalDate.now());
+        boolean hasStarted = order.getCheckInDate().isBefore(LocalDate.now()) || order.getCheckInDate().isEqual(LocalDate.now());
         if (hasStarted) {
             order.setStatus(Order.OrderStatus.CANCEL_REQUESTED);
         } else {
