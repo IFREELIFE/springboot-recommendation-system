@@ -171,7 +171,9 @@ const getStatusText = (status) => {
 
 const getOrderType = (order) => {
   if (!order?.checkInDate) return '预定'
-  return dayjs(order.checkInDate).isAfter(dayjs(), 'day') ? '预定' : '已使用'
+  if (dayjs(order.checkInDate).isAfter(dayjs(), 'day')) return '预定'
+  if (dayjs(order.checkInDate).isSame(dayjs(), 'day')) return '进行中'
+  return '已使用'
 }
 
 const canCancel = (order) => {
