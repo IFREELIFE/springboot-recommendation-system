@@ -61,8 +61,7 @@ const rows = computed(() =>
     const rooms = Number(p.bedrooms || 0)
     const bookedRooms = Number(p.bookingCount || 0)
     const remainingRooms = Math.max(rooms - bookedRooms, 0)
-    const occupancyRate =
-      rooms > 0 ? `${Math.min((bookedRooms / rooms) * 100, 100).toFixed(0)}%` : '0%'
+    const occupancyRate = rooms > 0 ? `${((bookedRooms / rooms) * 100).toFixed(0)}%` : '0%'
     return {
       ...p,
       rooms,
@@ -85,7 +84,7 @@ const fetchData = async () => {
       pagination.total = response.data.totalElements || 0
     }
   } catch (error) {
-    // 保持静默处理错误：加载状态已提供反馈，避免重复提示
+    // Keep silent here; loading state already communicates progress/failure
   } finally {
     loading.value = false
   }
