@@ -46,6 +46,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import propertyService from '../services/propertyService'
 
 const loading = ref(false)
@@ -85,6 +86,7 @@ const fetchData = async () => {
     }
   } catch (error) {
     console.error('Failed to load occupancy data', error)
+    ElMessage.error('入住与剩余房间数据加载失败，请稍后重试')
   } finally {
     loading.value = false
   }
