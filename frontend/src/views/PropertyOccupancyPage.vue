@@ -84,7 +84,7 @@ const fetchData = async () => {
       pagination.total = response.data.totalElements || 0
     }
   } catch (error) {
-    // Keep silent here; loading state already communicates progress/failure
+    console.error('Failed to load occupancy data', error)
   } finally {
     loading.value = false
   }
