@@ -8,16 +8,15 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * User Entity
- * 
- * Represents a user in the homestay recommendation system.
- * Uses MyBatis-Plus annotations for ORM mapping.
- * 
- * User roles:
- * - USER: Regular user who can browse and book properties
- * - LANDLORD: Property owner who can list and manage properties
- * - ADMIN: System administrator with full access
- * 
+ * 用户实体
+ *
+ * 代表民宿推荐系统中的用户，使用 MyBatis-Plus 注解进行 ORM 映射。
+ *
+ * 用户角色：
+ * - USER：普通用户，可浏览与预订房源
+ * - LANDLORD：房东，可发布与管理房源
+ * - ADMIN：管理员，拥有全部权限
+ *
  * @author Homestay Recommendation System
  */
 @Data
@@ -27,63 +26,60 @@ import java.time.LocalDateTime;
 public class User {
 
     /**
-     * User ID (Primary Key)
-     * Auto-incremented by database
+     * 用户ID（主键），数据库自增
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * Unique username for login
+     * 登录使用的唯一用户名
      */
     private String username;
 
     /**
-     * Encrypted password
+     * 加密后的密码
      */
     private String password;
 
     /**
-     * User email address
+     * 用户邮箱
      */
     private String email;
 
     /**
-     * User phone number
+     * 用户手机号
      */
     private String phone;
 
     /**
-     * User avatar URL
+     * 用户头像地址
      */
     private String avatar;
 
     /**
-     * User role (USER, LANDLORD, ADMIN)
+     * 用户角色（USER、LANDLORD、ADMIN）
      */
     private Role role = Role.USER;
 
     /**
-     * Account enabled status
+     * 账户是否启用
      */
     private Boolean enabled = true;
 
     /**
-     * Record creation timestamp
-     * Automatically filled by MyMetaObjectHandler on insert
+     * 创建时间，插入时由 MyMetaObjectHandler 自动填充
      */
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
     /**
-     * Record last update timestamp
-     * Automatically filled by MyMetaObjectHandler on insert and update
+     * 更新时间，插入与更新时自动填充
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
 
     /**
-     * User role enumeration
+     * 用户角色枚举
      */
     public enum Role {
         USER, LANDLORD, ADMIN

@@ -36,7 +36,7 @@ public class OrderController {
         try {
             Order order = orderService.createOrder(request, currentUser.getId());
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse(true, "Order created successfully", order));
+                    .body(new ApiResponse(true, "订单创建成功", order));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
@@ -50,7 +50,7 @@ public class OrderController {
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Order order = orderService.getOrderById(id);
-            return ResponseEntity.ok(new ApiResponse(true, "Order retrieved successfully", order));
+            return ResponseEntity.ok(new ApiResponse(true, "订单获取成功", order));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse(false, e.getMessage()));
@@ -64,7 +64,7 @@ public class OrderController {
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Order order = orderService.getOrderByNumber(orderNumber);
-            return ResponseEntity.ok(new ApiResponse(true, "Order retrieved successfully", order));
+            return ResponseEntity.ok(new ApiResponse(true, "订单获取成功", order));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse(false, e.getMessage()));
@@ -80,7 +80,7 @@ public class OrderController {
         try {
             IPage<Order> orders = orderService.getUserOrders(currentUser.getId(), page, size);
             PageResponse<Order> pageResponse = PageResponse.fromIPage(orders);
-            return ResponseEntity.ok(new ApiResponse(true, "Orders retrieved successfully", pageResponse));
+            return ResponseEntity.ok(new ApiResponse(true, "订单列表获取成功", pageResponse));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
@@ -97,7 +97,7 @@ public class OrderController {
         try {
             IPage<Order> orders = orderService.getOrdersForLandlord(currentUser.getId(), page, size);
             PageResponse<Order> pageResponse = PageResponse.fromIPage(orders);
-            return ResponseEntity.ok(new ApiResponse(true, "Orders retrieved successfully", pageResponse));
+            return ResponseEntity.ok(new ApiResponse(true, "订单列表获取成功", pageResponse));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
@@ -112,7 +112,7 @@ public class OrderController {
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Order order = orderService.updateOrderStatus(id, status, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Order status updated successfully", order));
+            return ResponseEntity.ok(new ApiResponse(true, "订单状态更新成功", order));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
@@ -127,8 +127,8 @@ public class OrderController {
         try {
             Order order = orderService.cancelOrder(id, currentUser.getId());
             String message = order.getStatus() == Order.OrderStatus.CANCEL_REQUESTED
-                    ? "Cancellation requested, pending landlord review"
-                    : "Order cancelled successfully";
+                    ? "已提交取消申请，等待房东审核"
+                    : "订单已取消";
             return ResponseEntity.ok(new ApiResponse(true, message, order));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -145,7 +145,7 @@ public class OrderController {
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Order order = orderService.reviewCancellation(id, currentUser.getId(), approve);
-            String message = approve ? "Cancellation approved" : "Cancellation rejected";
+            String message = approve ? "退订已批准" : "退订已拒绝";
             return ResponseEntity.ok(new ApiResponse(true, message, order));
         } catch (Exception e) {
             return ResponseEntity.badRequest()

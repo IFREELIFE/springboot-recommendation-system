@@ -40,11 +40,11 @@ public class Property {
 
     private Integer maxGuests;
 
-    private String propertyType; // apartment, house, villa, etc.
+    private String propertyType; // 公寓、独栋、别墅等类型
 
-    private String amenities; // JSON string of amenities
+    private String amenities; // 设施信息的 JSON 字符串
 
-    private String images; // JSON string of image URLs
+    private String images; // 图片地址的 JSON 字符串
 
     private Boolean available = true;
 

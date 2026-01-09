@@ -13,7 +13,7 @@ public class OpenApiConfig {
     public OpenAPI baseOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Homestay Recommendation System API")
+                        .title("民宿推荐系统 API")
                         .description("接口文档：包含民宿推荐系统的业务接口说明")
                         .version("v1"));
     }

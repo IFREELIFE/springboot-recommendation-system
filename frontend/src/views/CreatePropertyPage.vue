@@ -185,7 +185,7 @@ const handleFileChange = (file, files) => {
   fileList.value = files
 }
 
-// Accepts stringified JSON or array and returns comma-separated amenities
+// 接受字符串化的 JSON 或数组，返回以逗号分隔的设施字符串
 const parseAmenities = (value) => {
   if (!value) return ''
   if (Array.isArray(value)) return value.join(',')

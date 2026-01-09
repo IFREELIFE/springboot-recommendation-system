@@ -7,25 +7,23 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 /**
- * MyBatis-Plus Automatic Field Fill Handler
- * 
- * Automatically fills createdAt and updatedAt timestamp fields for entities
- * during database insert and update operations. This ensures consistent
- * timestamp management across all entities without manual intervention.
- * 
- * Works with entities that have @TableField(fill = FieldFill.INSERT) or
- * @TableField(fill = FieldFill.INSERT_UPDATE) annotations.
- * 
+ * MyBatis-Plus 自动填充处理器
+ *
+ * 在插入和更新时自动填充实体的 createdAt 与 updatedAt 字段，保证所有实体时间戳一致且无需手动维护。
+ *
+ * 适用于标记了 @TableField(fill = FieldFill.INSERT) 或
+ * @TableField(fill = FieldFill.INSERT_UPDATE) 的字段。
+ *
  * @author Homestay Recommendation System
  */
 @Component
 public class MyMetaObjectHandler implements MetaObjectHandler {
 
     /**
-     * Automatic field fill during INSERT operations
-     * Sets both createdAt and updatedAt to current timestamp
-     * 
-     * @param metaObject Entity meta object
+     * 插入操作时自动填充
+     * 将 createdAt 与 updatedAt 设为当前时间
+     *
+     * @param metaObject 实体元对象
      */
     @Override
     public void insertFill(MetaObject metaObject) {
@@ -34,10 +32,10 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     }
 
     /**
-     * Automatic field fill during UPDATE operations
-     * Updates only the updatedAt timestamp
-     * 
-     * @param metaObject Entity meta object
+     * 更新操作时自动填充
+     * 仅更新 updatedAt 字段
+     *
+     * @param metaObject 实体元对象
      */
     @Override
     public void updateFill(MetaObject metaObject) {

@@ -11,16 +11,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Custom User Details Service
- * 
- * Implements Spring Security's UserDetailsService to load user-specific data
- * from database using MyBatis-Plus. Integrates authentication with the User entity.
- * 
- * Key features:
- * - Load user by username for authentication
- * - Load user by ID for JWT token validation
- * - Uses MyBatis-Plus QueryWrapper for flexible queries
- * 
+ * 自定义用户详情服务
+ *
+ * 实现 Spring Security 的 UserDetailsService，基于 MyBatis-Plus 加载用户数据，
+ * 将认证流程与用户实体对接。
+ *
+ * 主要功能：
+ * - 通过用户名加载用户用于认证
+ * - 通过用户ID加载用户用于 JWT 校验
+ * - 使用 MyBatis-Plus QueryWrapper 提供灵活查询
+ *
  * @author Homestay Recommendation System
  */
 @Service
@@ -30,44 +30,44 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserMapper userMapper;
 
     /**
-     * Load user by username for Spring Security authentication
-     * 
-     * Uses MyBatis-Plus QueryWrapper to query user by username.
-     * 
-     * @param username Username to search for
-     * @return UserDetails object for Spring Security
-     * @throws UsernameNotFoundException if user not found
+     * 按用户名加载用户（用于认证）
+     *
+     * 通过 MyBatis-Plus QueryWrapper 查询用户名。
+     *
+     * @param username 需查询的用户名
+     * @return Spring Security 使用的 UserDetails
+     * @throws UsernameNotFoundException 当用户不存在时抛出
      */
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Query user using MyBatis-Plus QueryWrapper
+        // 使用 MyBatis-Plus QueryWrapper 查询用户
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username", username);
         User user = userMapper.selectOne(queryWrapper);
         
         if (user == null) {
-            throw new UsernameNotFoundException("User not found with username: " + username);
+            throw new UsernameNotFoundException("未找到用户名为 " + username + " 的用户");
         }
         return UserPrincipal.create(user);
     }
 
     /**
-     * Load user by ID for JWT token validation
-     * 
-     * Uses MyBatis-Plus selectById for efficient lookup by primary key.
-     * 
-     * @param id User ID
-     * @return UserDetails object for Spring Security
-     * @throws UsernameNotFoundException if user not found
+     * 按用户ID加载用户（用于 JWT 校验）
+     *
+     * 使用 MyBatis-Plus selectById 通过主键高效查询。
+     *
+     * @param id 用户ID
+     * @return Spring Security 使用的 UserDetails
+     * @throws UsernameNotFoundException 当用户不存在时抛出
      */
     @Transactional
     public UserDetails loadUserById(Long id) {
-        // Query user using MyBatis-Plus selectById
+        // 使用 MyBatis-Plus selectById 查询用户
         User user = userMapper.selectById(id);
         
         if (user == null) {
-            throw new UsernameNotFoundException("User not found with id: " + id);
+            throw new UsernameNotFoundException("未找到ID为 " + id + " 的用户");
         }
         return UserPrincipal.create(user);
     }

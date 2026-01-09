@@ -51,7 +51,7 @@ public class RedisConfig {
         jacksonSerializer.setObjectMapper(objectMapper);
         // ========== 结束修改 ==========
 
-        // Use StringRedisSerializer for key serialization
+        // 键使用 StringRedisSerializer 进行序列化
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
         // 5. 替换原JACKSON_SERIALIZER为配置好的jacksonSerializer

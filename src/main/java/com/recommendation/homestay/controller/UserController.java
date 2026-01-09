@@ -36,10 +36,10 @@ public class UserController {
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserPrincipal currentUser) {
         User user = userMapper.selectById(currentUser.getId());
         if (user == null) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "User not found"));
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "未找到用户"));
         }
         user.setPassword(null);
-        return ResponseEntity.ok(new ApiResponse(true, "Profile retrieved successfully", user));
+        return ResponseEntity.ok(new ApiResponse(true, "获取个人信息成功", user));
     }
 
     @PutMapping("/me")
@@ -49,7 +49,7 @@ public class UserController {
             @AuthenticationPrincipal UserPrincipal currentUser) {
         User user = userMapper.selectById(currentUser.getId());
         if (user == null) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "User not found"));
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "未找到用户"));
         }
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
@@ -57,7 +57,7 @@ public class UserController {
             emailQuery.eq("email", request.getEmail()).ne("id", user.getId());
             // 数据库应保持唯一约束，这里先显式检查以提供友好错误信息，实际唯一性仍以数据库约束兜底避免并发竞态
             if (userMapper.selectCount(emailQuery) > 0) {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "Email already in use"));
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "邮箱已被使用"));
             }
             user.setEmail(request.getEmail());
         }
@@ -76,6 +76,6 @@ public class UserController {
 
         userMapper.updateById(user);
         user.setPassword(null);
-        return ResponseEntity.ok(new ApiResponse(true, "Profile updated successfully", user));
+        return ResponseEntity.ok(new ApiResponse(true, "个人信息更新成功", user));
     }
 }
