@@ -33,7 +33,7 @@ public class RecommendationController {
             List<Property> recommendations = recommendationService.getRecommendations(
                     currentUser.getId(), limit);
             return ResponseEntity.ok(new ApiResponse(true, 
-                    "Recommendations retrieved successfully", recommendations));
+                    "推荐列表获取成功", recommendations));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
@@ -49,7 +49,7 @@ public class RecommendationController {
             List<Property> recommendations = recommendationService
                     .getCollaborativeFilteringRecommendations(currentUser.getId(), limit);
             return ResponseEntity.ok(new ApiResponse(true, 
-                    "Collaborative recommendations retrieved successfully", recommendations));
+                    "协同过滤推荐获取成功", recommendations));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
@@ -65,7 +65,7 @@ public class RecommendationController {
             List<Property> recommendations = recommendationService
                     .getContentBasedRecommendations(currentUser.getId(), limit);
             return ResponseEntity.ok(new ApiResponse(true, 
-                    "Content-based recommendations retrieved successfully", recommendations));
+                    "内容相似推荐获取成功", recommendations));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));

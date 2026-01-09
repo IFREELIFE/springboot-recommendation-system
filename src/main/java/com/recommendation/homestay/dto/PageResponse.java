@@ -17,9 +17,9 @@ public class PageResponse<T> {
     private long current;       // 当前页（从0/1开始，和前端保持一致）
     private long pages;         // 总页数
 
-    // Keep legacy field names (content/totalElements) for frontend compatibility
+    // 保留旧字段名（content/totalElements）以兼容前端
     /**
-     * Legacy alias for records to keep frontend responses backward compatible.
+     * records 的旧别名，保证前端响应向后兼容。
      */
     @JsonProperty("content")
     public List<T> getContent() {
@@ -32,7 +32,7 @@ public class PageResponse<T> {
     }
 
     /**
-     * Legacy alias for total to keep frontend responses backward compatible.
+     * total 的旧别名，保证前端响应向后兼容。
      */
     @JsonProperty("totalElements")
     public long getTotalElements() {

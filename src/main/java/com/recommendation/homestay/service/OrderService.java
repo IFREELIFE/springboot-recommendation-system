@@ -37,29 +37,29 @@ public class OrderService {
     public Order createOrder(OrderRequest request, Long userId) {
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new RuntimeException("User not found");
+            throw new RuntimeException("未找到用户");
         }
 
         Property property = propertyMapper.selectById(request.getPropertyId());
         if (property == null) {
-            throw new RuntimeException("Property not found");
+            throw new RuntimeException("未找到房源");
         }
 
         if (!property.getAvailable()) {
-            throw new RuntimeException("Property is not available");
+            throw new RuntimeException("房源不可用");
         }
 
         if (request.getCheckOutDate().isBefore(request.getCheckInDate())) {
-            throw new RuntimeException("Check-out date must be after check-in date");
+            throw new RuntimeException("退房日期必须晚于入住日期");
         }
 
         if (request.getCheckInDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("Check-in date cannot be in the past");
+            throw new RuntimeException("入住日期不能早于当前日期");
         }
 
         long days = ChronoUnit.DAYS.between(request.getCheckInDate(), request.getCheckOutDate());
         if (days < 1) {
-            throw new RuntimeException("Minimum booking is 1 night");
+            throw new RuntimeException("最少预订1晚");
         }
 
         BigDecimal totalPrice = property.getPrice().multiply(BigDecimal.valueOf(days));
@@ -77,7 +77,7 @@ public class OrderService {
 
         orderMapper.insert(order);
 
-        // Update property booking count
+        // 更新房源预订次数
         property.setBookingCount(property.getBookingCount() + 1);
         propertyMapper.updateById(property);
 
@@ -88,11 +88,11 @@ public class OrderService {
     public Order updateOrderStatus(Long orderId, Order.OrderStatus status, Long userId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("Order not found");
+            throw new RuntimeException("未找到订单");
         }
 
         if (!order.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized to update this order");
+            throw new RuntimeException("无权更新该订单");
         }
 
         order.setStatus(status);
@@ -103,7 +103,7 @@ public class OrderService {
     public Order getOrderById(Long orderId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("Order not found");
+            throw new RuntimeException("未找到订单");
         }
         return order;
     }
@@ -111,7 +111,7 @@ public class OrderService {
     public Order getOrderByNumber(String orderNumber) {
         Order order = orderMapper.findByOrderNumber(orderNumber);
         if (order == null) {
-            throw new RuntimeException("Order not found");
+            throw new RuntimeException("未找到订单");
         }
         return order;
     }
@@ -129,19 +129,19 @@ public class OrderService {
     public Order cancelOrder(Long orderId, Long userId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("Order not found");
+            throw new RuntimeException("未找到订单");
         }
 
         if (!order.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized to cancel this order");
+            throw new RuntimeException("无权取消该订单");
         }
 
         if (order.getStatus() == Order.OrderStatus.CANCELLED || order.getStatus() == Order.OrderStatus.COMPLETED) {
-            throw new RuntimeException("Order already completed or cancelled");
+            throw new RuntimeException("订单已完成或已取消");
         }
 
         if (order.getStatus() == Order.OrderStatus.CANCEL_REQUESTED) {
-            throw new RuntimeException("Cancellation already requested and pending review");
+            throw new RuntimeException("取消申请已提交，等待审核");
         }
 
         boolean hasStarted = order.getCheckInDate().isBefore(LocalDate.now()) || order.getCheckInDate().isEqual(LocalDate.now());
@@ -175,17 +175,17 @@ public class OrderService {
     public Order reviewCancellation(Long orderId, Long landlordId, boolean approve) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
-            throw new RuntimeException("Order not found");
+            throw new RuntimeException("未找到订单");
         }
         Property property = propertyMapper.selectById(order.getPropertyId());
         if (property == null) {
-            throw new RuntimeException("Property not found for order");
+            throw new RuntimeException("未找到该订单对应的房源");
         }
         if (!property.getLandlordId().equals(landlordId)) {
-            throw new RuntimeException("Unauthorized to review this order");
+            throw new RuntimeException("无权审核该订单");
         }
         if (order.getStatus() != Order.OrderStatus.CANCEL_REQUESTED) {
-            throw new RuntimeException("No cancellation request to review");
+            throw new RuntimeException("暂无退订申请可审核");
         }
         order.setStatus(approve ? Order.OrderStatus.CANCELLED : Order.OrderStatus.CANCEL_REJECTED);
         orderMapper.updateById(order);

@@ -9,7 +9,7 @@ const api = axios.create({
   }
 })
 
-// Request interceptor
+// 请求拦截器
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -23,7 +23,7 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor
+// 响应拦截器
 api.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -89,6 +89,6 @@ const fetchRecommendations = async () => {
 }
 
 const handleTabClick = () => {
-  // Optional: could fetch data on tab change
+// 可选：切换标签时重新获取数据
 }
 </script>

@@ -18,17 +18,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Authentication Service
- * 
- * Handles user authentication and registration operations using MyBatis-Plus.
- * Provides secure user management with password encryption and JWT token generation.
- * 
- * Key features:
- * - User registration with duplicate validation
- * - Secure login with JWT token generation
- * - Password encryption using BCrypt
- * - Transaction management for data consistency
- * 
+ * 认证服务
+ *
+ * 使用 MyBatis-Plus 处理用户认证与注册逻辑，提供密码加密与 JWT 令牌生成等安全能力。
+ *
+ * 主要功能：
+ * - 用户注册时校验重复
+ * - 生成 JWT 令牌的安全登录
+ * - 通过 BCrypt 加密密码
+ * - 事务管理保证数据一致性
+ *
  * @author Homestay Recommendation System
  */
 @Service
@@ -47,39 +46,38 @@ public class AuthService {
     private JwtTokenProvider tokenProvider;
 
     /**
-     * Register a new user
-     * 
-     * Validates that username and email are unique, encrypts password,
-     * and creates new user record using MyBatis-Plus insert operation.
-     * 
-     * @param request Registration request containing user details
-     * @return Created user entity
-     * @throws RuntimeException if username or email already exists
+     * 注册新用户
+     *
+     * 校验用户名与邮箱唯一性，加密密码并通过 MyBatis-Plus 插入用户记录。
+     *
+     * @param request 包含用户信息的注册请求
+     * @return 新建的用户实体
+     * @throws RuntimeException 当用户名或邮箱已存在时抛出
      */
     @Transactional
     public User registerUser(RegisterRequest request) {
-        // Check username uniqueness using MyBatis-Plus QueryWrapper
+        // 使用 MyBatis-Plus QueryWrapper 校验用户名唯一性
         QueryWrapper<User> usernameQuery = new QueryWrapper<>();
         usernameQuery.eq("username", request.getUsername());
         if (userMapper.selectCount(usernameQuery) > 0) {
-            throw new RuntimeException("Username already exists");
+            throw new RuntimeException("用户名已存在");
         }
 
-        // Check email uniqueness using MyBatis-Plus QueryWrapper
+        // 使用 MyBatis-Plus QueryWrapper 校验邮箱唯一性
         QueryWrapper<User> emailQuery = new QueryWrapper<>();
         emailQuery.eq("email", request.getEmail());
         if (userMapper.selectCount(emailQuery) > 0) {
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException("邮箱已存在");
         }
 
-        // Create new user with encrypted password
+        // 创建用户并加密密码
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhone(request.getPhone());
         
-        // Set user role from request or default to USER
+        // 从请求中设置角色，默认 USER
         if (request.getRole() != null) {
             try {
                 user.setRole(User.Role.valueOf(request.getRole().toUpperCase()));
@@ -92,18 +90,18 @@ public class AuthService {
         
         user.setEnabled(true);
 
-        // Insert using MyBatis-Plus
+        // 通过 MyBatis-Plus 插入数据
         userMapper.insert(user);
         return user;
     }
 
     /**
-     * Authenticate user and generate JWT token
-     * 
-     * Validates credentials and returns JWT token for authenticated access.
-     * 
-     * @param request Login request with username and password
-     * @return JWT response containing token and user details
+     * 认证用户并生成 JWT 令牌
+     *
+     * 校验凭证后返回包含令牌与用户信息的响应。
+     *
+     * @param request 携带用户名与密码的登录请求
+     * @return 包含令牌和用户详情的 JWT 响应
      */
     public JwtResponse loginUser(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(

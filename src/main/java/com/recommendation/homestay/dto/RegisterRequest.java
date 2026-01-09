@@ -13,19 +13,19 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 public class RegisterRequest {
     
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @NotBlank(message = "用户名为必填项")
+    @Size(min = 3, max = 50, message = "用户名长度需在3到50字符之间")
     private String username;
     
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 100, message = "Password must be at least 6 characters")
+    @NotBlank(message = "密码为必填项")
+    @Size(min = 6, max = 100, message = "密码长度至少6位")
     private String password;
     
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email must be valid")
+    @NotBlank(message = "邮箱为必填项")
+    @Email(message = "邮箱格式不正确")
     private String email;
     
     private String phone;
     
-    private String role; // USER, LANDLORD, ADMIN
+    private String role; // USER、LANDLORD、ADMIN
 }

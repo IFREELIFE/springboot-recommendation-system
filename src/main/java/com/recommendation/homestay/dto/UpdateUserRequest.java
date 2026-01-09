@@ -8,14 +8,14 @@ import javax.validation.constraints.Size;
 
 @Data
 public class UpdateUserRequest {
-    @Email(message = "Email must be valid")
+    @Email(message = "邮箱格式不正确")
     private String email;
 
-    @Pattern(regexp = "^\\+?[0-9\\s\\-]{6,20}$", message = "Phone number format is invalid")
+    @Pattern(regexp = "^\\+?[0-9\\s\\-]{6,20}$", message = "手机号格式不正确")
     private String phone;
 
     private String avatar;
 
-    @Size(min = 6, max = 100, message = "Password must be at least 6 characters")
+    @Size(min = 6, max = 100, message = "密码长度至少6位")
     private String password;
 }

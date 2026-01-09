@@ -67,7 +67,7 @@ public class PropertyService {
     public Property createProperty(PropertyRequest request, Long landlordId) {
         User landlord = userMapper.selectById(landlordId);
         if (landlord == null) {
-            throw new RuntimeException("Landlord not found");
+            throw new RuntimeException("未找到房东");
         }
 
         Property property = new Property();
@@ -99,11 +99,11 @@ public class PropertyService {
     public Property updateProperty(Long propertyId, PropertyRequest request, Long landlordId) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
-            throw new RuntimeException("Property not found");
+            throw new RuntimeException("未找到房源");
         }
 
         if (!property.getLandlordId().equals(landlordId)) {
-            throw new RuntimeException("Unauthorized to update this property");
+            throw new RuntimeException("无权更新该房源");
         }
 
         property.setTitle(request.getTitle());
@@ -132,7 +132,7 @@ public class PropertyService {
     public Property appendImages(Long propertyId, List<String> newImages) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
-            throw new RuntimeException("Property not found with ID: " + propertyId);
+            throw new RuntimeException("未找到指定ID的房源：" + propertyId);
         }
         List<String> merged = new ArrayList<>();
         try {
@@ -147,7 +147,7 @@ public class PropertyService {
         try {
             property.setImages(objectMapper.writeValueAsString(merged));
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to save images", e);
+            throw new IllegalStateException("保存图片失败", e);
         }
         propertyMapper.updateById(property);
         return property;
@@ -161,11 +161,11 @@ public class PropertyService {
     public void deleteProperty(Long propertyId, Long landlordId) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
-            throw new RuntimeException("Property not found");
+            throw new RuntimeException("未找到房源");
         }
 
         if (!property.getLandlordId().equals(landlordId)) {
-            throw new RuntimeException("Unauthorized to delete this property");
+            throw new RuntimeException("无权删除该房源");
         }
 
         propertyMapper.deleteById(propertyId);
@@ -176,7 +176,7 @@ public class PropertyService {
     public Property getPropertyById(Long propertyId) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
-            throw new RuntimeException("Property not found");
+            throw new RuntimeException("未找到房源");
         }
         return property;
     }
@@ -191,7 +191,7 @@ public class PropertyService {
     public IPage<Property> getPropertiesByLandlord(Long landlordId, int page, int size) {
         User landlord = userMapper.selectById(landlordId);
         if (landlord == null) {
-            throw new RuntimeException("Landlord not found");
+            throw new RuntimeException("未找到房东");
         }
         Page<Property> pageParam = new Page<>(page + 1, size);
         QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
@@ -313,7 +313,7 @@ public class PropertyService {
     public void incrementViewCount(Long propertyId) {
         int result = propertyMapper.incrementViewCount(propertyId);
         if (result == 0) {
-            throw new RuntimeException("Property not found");
+            throw new RuntimeException("未找到房源");
         }
     }
 

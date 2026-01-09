@@ -28,7 +28,7 @@ public class UserPropertyInteraction {
 
     private InteractionType type;
 
-    private Integer rating; // 1-5 for rating interactions
+    private Integer rating; // 评分值，范围 1-5
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

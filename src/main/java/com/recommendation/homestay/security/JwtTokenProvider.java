@@ -39,7 +39,7 @@ public class JwtTokenProvider {
         logger.debug("Generating JWT token for user: {}, userId: {}, expiry: {}", 
                    userPrincipal.getUsername(), userPrincipal.getId(), expiryDate);
 
-        // Include user information in JWT claims to avoid database lookups
+        // 在 JWT Claims 中包含用户信息以避免数据库查询
         return Jwts.builder()
                 .setSubject(Long.toString(userPrincipal.getId()))
                 .claim("username", userPrincipal.getUsername())
@@ -77,14 +77,14 @@ public class JwtTokenProvider {
 
         logger.debug("Creating UserDetails from JWT token for userId: {}", userId);
         
-        // Create UserPrincipal from JWT claims without database lookup
-        // Note: Empty password is safe here as this UserDetails is only used for authorization,
-        // not authentication. The JWT signature verification already validates the user's identity.
+        // 直接依据 JWT Claims 构建 UserPrincipal，无需数据库查询
+        // 说明：此处密码留空是安全的，因为该 UserDetails 仅用于授权，
+        // 非认证环节，JWT 签名校验已确认身份。
         return new UserPrincipal(
                 userId,
                 username,
                 email,
-                "",  // Password not needed - JWT signature already verified user identity
+                "",  // 无需密码——JWT 签名已验证用户身份
                 Collections.singleton(new SimpleGrantedAuthority(role))
         );
     }

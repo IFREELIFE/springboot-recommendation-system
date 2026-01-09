@@ -27,24 +27,23 @@ public class RecommendationService {
     private UserPropertyInteractionMapper interactionMapper;
 
     /**
-     * Hybrid recommendation: Combines collaborative filtering and content-based filtering
-     * This is the MAIN HYBRID ALGORITHM that combines both recommendation approaches
+     * 混合推荐：结合协同过滤与内容相似推荐，是核心的综合推荐算法
      */
     @Cacheable(value = "recommendations", key = "#userId")
     public List<Property> getRecommendations(Long userId, int limit) {
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new RuntimeException("User not found");
+            throw new RuntimeException("未找到用户");
         }
 
-        // Get recommendations from both algorithms
+        // 同时获取两种算法的推荐结果
         List<Property> collaborativeRecommendations = getCollaborativeFilteringRecommendations(userId, limit * 2);
         List<Property> contentBasedRecommendations = getContentBasedRecommendations(userId, limit * 2);
 
-        // Merge and score
+        // 合并并打分
         Map<Long, Double> propertyScores = new HashMap<>();
 
-        // Weight: 60% collaborative, 40% content-based
+        // 权重：协同过滤 60%，内容相似 40%
         for (int i = 0; i < collaborativeRecommendations.size(); i++) {
             Property property = collaborativeRecommendations.get(i);
             double score = (collaborativeRecommendations.size() - i) * 0.6;
@@ -57,7 +56,7 @@ public class RecommendationService {
             propertyScores.merge(property.getId(), score, Double::sum);
         }
 
-        // Sort by score and return top results
+        // 按得分排序并返回前 N 个
         return propertyScores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
@@ -67,8 +66,7 @@ public class RecommendationService {
     }
 
     /**
-     * Collaborative Filtering: User-based recommendation
-     * Finds similar users and recommends properties they liked
+     * 协同过滤：基于相似用户的推荐，寻找相似用户喜欢的房源
      */
     public List<Property> getCollaborativeFilteringRecommendations(Long userId, int limit) {
         QueryWrapper<UserPropertyInteraction> queryWrapper = new QueryWrapper<>();
@@ -76,17 +74,17 @@ public class RecommendationService {
         List<UserPropertyInteraction> userInteractions = interactionMapper.selectList(queryWrapper);
 
         if (userInteractions.isEmpty()) {
-            // Cold start: return popular properties
+            // 冷启动：返回热门房源
             return propertyMapper.findTop10ByAvailableTrueOrderByBookingCountDesc()
                     .stream().limit(limit).collect(Collectors.toList());
         }
 
-        // Get properties user has interacted with
+        // 获取当前用户已交互的房源
         Set<Long> interactedPropertyIds = userInteractions.stream()
                 .map(UserPropertyInteraction::getPropertyId)
                 .collect(Collectors.toSet());
 
-        // Find similar users based on common property interactions
+        // 基于公共房源交互寻找相似用户
         List<UserPropertyInteraction> allInteractions = interactionMapper.selectList(null);
         
         Map<Long, Set<Long>> userPropertyMap = new HashMap<>();
@@ -95,7 +93,7 @@ public class RecommendationService {
                     .add(interaction.getPropertyId());
         }
 
-        // Calculate similarity scores with other users
+        // 计算与其他用户的相似度
         Map<Long, Double> similarityScores = new HashMap<>();
         Set<Long> currentUserProperties = userPropertyMap.get(userId);
         
@@ -115,7 +113,7 @@ public class RecommendationService {
             }
         }
 
-        // Get recommendations from similar users
+        // 根据相似用户的交互汇总推荐
         Map<Long, Double> recommendationScores = new HashMap<>();
         for (Map.Entry<Long, Double> entry : similarityScores.entrySet()) {
             Long similarUserId = entry.getKey();
@@ -129,7 +127,7 @@ public class RecommendationService {
             }
         }
 
-        // Get top recommendations
+        // 取出得分最高的推荐结果
         return recommendationScores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
@@ -258,7 +256,7 @@ public class RecommendationService {
     }
 
     /**
-     * Calculate Jaccard similarity between two sets
+     * 计算两个集合的杰卡德相似度
      */
     private double calculateJaccardSimilarity(Set<Long> set1, Set<Long> set2) {
         if (set1.isEmpty() && set2.isEmpty()) return 0.0;

@@ -11,9 +11,9 @@ import javax.validation.constraints.NotBlank;
 @AllArgsConstructor
 public class LoginRequest {
     
-    @NotBlank(message = "Username is required")
+    @NotBlank(message = "用户名为必填项")
     private String username;
     
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "密码为必填项")
     private String password;
 }

@@ -36,9 +36,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                // Extract user details directly from JWT token without database lookup
-                // This eliminates the second SQL query and improves performance
-                // Trade-off: User information changes (role, email) require re-login to take effect
+                // 直接从 JWT 令牌提取用户信息，无需数据库查询
+                // 避免额外 SQL，提升性能
+                // 取舍：角色或邮箱变更需要重新登录才能生效
                 UserDetails userDetails = tokenProvider.getUserDetailsFromToken(jwt);
                 
                 logger.debug("JWT Authentication Filter: Authenticated user {} from token for request to {}", 

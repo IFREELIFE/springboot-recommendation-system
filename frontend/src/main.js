@@ -12,7 +12,7 @@ import './assets/styles/main.css'
 const app = createApp(App)
 const pinia = createPinia()
 
-// Register all Element Plus icons
+// 注册全部 Element Plus 图标组件
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
