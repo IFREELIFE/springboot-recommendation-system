@@ -24,19 +24,18 @@
             <el-icon><StarFilled /></el-icon>
             <span>为你推荐</span>
           </el-menu-item>
+          <el-menu-item
+            v-if="userStore.isLandlord"
+            index="/property-occupancy"
+          >
+            <el-icon><Grid /></el-icon>
+            <span>入住与剩余房间</span>
+          </el-menu-item>
         </el-menu>
       </div>
       
       <div class="right-section">
         <template v-if="userStore.isAuthenticated">
-          <el-button
-            v-if="userStore.isLandlord"
-            type="primary"
-            @click="router.push('/create-property')"
-          >
-            <el-icon><Plus /></el-icon>
-            发布房源
-          </el-button>
           <el-dropdown @command="handleCommand">
             <el-avatar :icon="UserFilled" />
             <template #dropdown>
@@ -45,6 +44,9 @@
                 <el-dropdown-item command="profile">个人信息</el-dropdown-item>
                 <el-dropdown-item v-if="userStore.isLandlord" command="my-properties">
                   我的房源
+                </el-dropdown-item>
+                <el-dropdown-item v-if="userStore.isLandlord" command="property-occupancy">
+                  入住与剩余房间
                 </el-dropdown-item>
                 <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
@@ -64,7 +66,7 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../store/user'
-import { House, HomeFilled, Grid, StarFilled, Plus, UserFilled } from '@element-plus/icons-vue'
+import { House, HomeFilled, Grid, StarFilled, UserFilled } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -86,6 +88,8 @@ const handleCommand = (command) => {
     router.push('/profile')
   } else if (command === 'my-properties') {
     router.push('/my-properties')
+  } else if (command === 'property-occupancy') {
+    router.push('/property-occupancy')
   }
 }
 </script>

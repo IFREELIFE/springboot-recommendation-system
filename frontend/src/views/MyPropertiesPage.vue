@@ -1,10 +1,7 @@
 <template>
   <div class="my-properties-page">
     <div class="header">
-      <h2>我的房源</h2>
-      <el-button type="primary" @click="$router.push('/create-property')">
-        发布新房源
-      </el-button>
+      <h2>房源信息</h2>
     </div>
 
     <el-table :data="properties" v-loading="loading" stripe>
@@ -35,16 +32,6 @@
           {{ scope.row.rating }}/5.0
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150" fixed="right">
-        <template #default="scope">
-          <el-button type="primary" size="small" @click="handleEdit(scope.row.id)">
-            编辑
-          </el-button>
-          <el-button type="danger" size="small" @click="handleDelete(scope.row.id)">
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <el-pagination
@@ -61,11 +48,9 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import propertyService from '../services/propertyService'
 
-const router = useRouter()
 const properties = ref([])
 const loading = ref(false)
 
@@ -97,29 +82,6 @@ const fetchProperties = async () => {
   }
 }
 
-const handleEdit = (id) => {
-  router.push({ name: 'CreateProperty', query: { id } })
-}
-
-const handleDelete = async (id) => {
-  try {
-    await ElMessageBox.confirm('确定删除这个房源吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-
-    const response = await propertyService.deleteProperty(id)
-    if (response.success) {
-      ElMessage.success('删除成功')
-      fetchProperties()
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('删除失败')
-    }
-  }
-}
 </script>
 
 <style scoped>
