@@ -85,7 +85,7 @@ const fetchData = async () => {
       pagination.total = response.data.totalElements || 0
     }
   } catch (error) {
-    // 保持静默，页面已显示加载状态
+    // 保持静默处理错误：加载状态已提供反馈，避免重复提示
   } finally {
     loading.value = false
   }
