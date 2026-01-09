@@ -6,8 +6,8 @@
         <p>{{ heroSubtitle }}</p>
         <div class="hero-actions">
           <template v-if="userStore.isLandlord">
-            <el-button type="primary" @click="goTo('/my-properties')">管理我的房源</el-button>
-            <el-button @click="goTo('/create-property')">发布新房源</el-button>
+            <el-button type="primary" @click="goTo('/my-properties')">房源信息</el-button>
+            <el-button @click="goTo('/property-occupancy')">入住与剩余房间</el-button>
           </template>
           <template v-else>
             <el-button type="primary" @click="goTo('/recommendations')" :disabled="!userStore.isAuthenticated">
@@ -78,7 +78,7 @@ const heroTitle = computed(() =>
 )
 
 const heroSubtitle = computed(() =>
-  userStore.isLandlord ? '快捷管理房源、查看订单和发布新房源' : '发现你的完美住宿体验'
+  userStore.isLandlord ? '查看房源信息、入住情况与剩余房间' : '发现你的完美住宿体验'
 )
 
 const goTo = (path) => {

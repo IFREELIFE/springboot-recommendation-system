@@ -40,6 +40,12 @@ const routes = [
     meta: { requiresAuth: true, requiresLandlord: true }
   },
   {
+    path: '/property-occupancy',
+    name: 'PropertyOccupancy',
+    component: () => import('../views/PropertyOccupancyPage.vue'),
+    meta: { requiresAuth: true, requiresLandlord: true }
+  },
+  {
     path: '/my-orders',
     name: 'MyOrders',
     component: () => import('../views/MyOrdersPage.vue'),
@@ -53,9 +59,7 @@ const routes = [
   },
   {
     path: '/create-property',
-    name: 'CreateProperty',
-    component: () => import('../views/CreatePropertyPage.vue'),
-    meta: { requiresAuth: true, requiresLandlord: true }
+    redirect: '/my-properties'
   }
 ]
 
