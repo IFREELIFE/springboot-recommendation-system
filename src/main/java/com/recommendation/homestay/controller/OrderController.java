@@ -87,6 +87,23 @@ public class OrderController {
         }
     }
 
+    @GetMapping("/landlord")
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "房东订单列表", description = "查看房东名下房源的所有订单")
+    public ResponseEntity<?> getLandlordOrders(
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            IPage<Order> orders = orderService.getOrdersForLandlord(currentUser.getId(), page, size);
+            PageResponse<Order> pageResponse = PageResponse.fromIPage(orders);
+            return ResponseEntity.ok(new ApiResponse(true, "Orders retrieved successfully", pageResponse));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
     @PutMapping("/{id}/status")
     @Operation(summary = "更新订单状态", description = "更新订单的状态，如已支付、取消等")
     public ResponseEntity<?> updateOrderStatus(
@@ -108,8 +125,28 @@ public class OrderController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
-            orderService.cancelOrder(id, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Order cancelled successfully"));
+            Order order = orderService.cancelOrder(id, currentUser.getId());
+            String message = order.getStatus() == Order.OrderStatus.CANCEL_REQUESTED
+                    ? "Cancellation requested, pending landlord review"
+                    : "Order cancelled successfully";
+            return ResponseEntity.ok(new ApiResponse(true, message, order));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/review")
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "审核退订", description = "房东审核退订请求，approve=true表示通过")
+    public ResponseEntity<?> reviewCancellation(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "true") boolean approve,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        try {
+            Order order = orderService.reviewCancellation(id, currentUser.getId(), approve);
+            String message = approve ? "Cancellation approved" : "Cancellation rejected";
+            return ResponseEntity.ok(new ApiResponse(true, message, order));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));

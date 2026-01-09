@@ -24,6 +24,16 @@ const orderService = {
   async cancelOrder(id) {
     const response = await api.delete(`/orders/${id}`)
     return response.data
+  },
+
+  async getLandlordOrders(params) {
+    const response = await api.get('/orders/landlord', { params })
+    return response.data
+  },
+
+  async reviewCancellation(id, approve) {
+    const response = await api.post(`/orders/${id}/review`, null, { params: { approve } })
+    return response.data
   }
 }
 

@@ -12,25 +12,34 @@
           @select="handleMenuSelect"
           class="header-menu"
         >
-          <el-menu-item index="/">
-            <el-icon><HomeFilled /></el-icon>
-            <span>首页</span>
-          </el-menu-item>
-          <el-menu-item index="/properties">
-            <el-icon><Grid /></el-icon>
-            <span>浏览房源</span>
-          </el-menu-item>
-          <el-menu-item v-if="userStore.isAuthenticated" index="/recommendations">
-            <el-icon><StarFilled /></el-icon>
-            <span>为你推荐</span>
-          </el-menu-item>
-          <el-menu-item
-            v-if="userStore.isLandlord"
-            index="/property-occupancy"
-          >
-            <el-icon><Grid /></el-icon>
-            <span>入住与剩余房间</span>
-          </el-menu-item>
+          <template v-if="!userStore.isLandlord">
+            <el-menu-item index="/">
+              <el-icon><HomeFilled /></el-icon>
+              <span>首页</span>
+            </el-menu-item>
+            <el-menu-item index="/properties">
+              <el-icon><Grid /></el-icon>
+              <span>浏览房源</span>
+            </el-menu-item>
+            <el-menu-item v-if="userStore.isAuthenticated" index="/recommendations">
+              <el-icon><StarFilled /></el-icon>
+              <span>为你推荐</span>
+            </el-menu-item>
+          </template>
+          <template v-else>
+            <el-menu-item index="/my-properties">
+              <el-icon><HomeFilled /></el-icon>
+              <span>我的房源</span>
+            </el-menu-item>
+            <el-menu-item index="/property-occupancy">
+              <el-icon><Grid /></el-icon>
+              <span>入住与剩余房间</span>
+            </el-menu-item>
+            <el-menu-item index="/landlord/orders">
+              <el-icon><StarFilled /></el-icon>
+              <span>退订审核</span>
+            </el-menu-item>
+          </template>
         </el-menu>
       </div>
       
@@ -42,12 +51,20 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="my-orders">我的订单</el-dropdown-item>
                 <el-dropdown-item command="profile">个人信息</el-dropdown-item>
-                <el-dropdown-item v-if="userStore.isLandlord" command="my-properties">
-                  我的房源
-                </el-dropdown-item>
-                <el-dropdown-item v-if="userStore.isLandlord" command="property-occupancy">
-                  入住与剩余房间
-                </el-dropdown-item>
+                <template v-if="userStore.isLandlord">
+                  <el-dropdown-item command="my-properties">
+                    我的房源
+                  </el-dropdown-item>
+                  <el-dropdown-item command="create-property">
+                    发布房源
+                  </el-dropdown-item>
+                  <el-dropdown-item command="property-occupancy">
+                    入住与剩余房间
+                  </el-dropdown-item>
+                  <el-dropdown-item command="landlord-orders">
+                    退订审核
+                  </el-dropdown-item>
+                </template>
                 <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -90,6 +107,10 @@ const handleCommand = (command) => {
     router.push('/my-properties')
   } else if (command === 'property-occupancy') {
     router.push('/property-occupancy')
+  } else if (command === 'landlord-orders') {
+    router.push('/landlord/orders')
+  } else if (command === 'create-property') {
+    router.push('/landlord/create-property')
   }
 }
 </script>

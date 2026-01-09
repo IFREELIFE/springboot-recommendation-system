@@ -121,25 +121,12 @@ public class OrderService {
         QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId).orderByDesc("created_at");
         IPage<Order> orders = orderMapper.selectPage(pageParam, queryWrapper);
-        Set<Long> propertyIds = new HashSet<>();
-        orders.getRecords().forEach(order -> {
-            if (order.getPropertyId() != null) {
-                propertyIds.add(order.getPropertyId());
-            }
-        });
-        if (!propertyIds.isEmpty()) {
-            // propertyIds 已经去重且分页限制条目数，merge函数用于防御性处理潜在的键冲突
-            Map<Long, Property> propertyMap = propertyMapper.selectBatchIds(propertyIds)
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toMap(Property::getId, Function.identity(), (existing, replacement) -> existing));
-            orders.getRecords().forEach(order -> order.setProperty(propertyMap.get(order.getPropertyId())));
-        }
+        attachProperties(orders);
         return orders;
     }
 
     @Transactional
-    public void cancelOrder(Long orderId, Long userId) {
+    public Order cancelOrder(Long orderId, Long userId) {
         Order order = orderMapper.selectById(orderId);
         if (order == null) {
             throw new RuntimeException("Order not found");
@@ -149,11 +136,108 @@ public class OrderService {
             throw new RuntimeException("Unauthorized to cancel this order");
         }
 
-        if (order.getStatus() != Order.OrderStatus.PENDING) {
-            throw new RuntimeException("Can only cancel pending orders");
+        if (order.getStatus() == Order.OrderStatus.CANCELLED || order.getStatus() == Order.OrderStatus.COMPLETED) {
+            throw new RuntimeException("Order already completed or cancelled");
         }
 
-        order.setStatus(Order.OrderStatus.CANCELLED);
+        if (order.getStatus() == Order.OrderStatus.CANCEL_REQUESTED) {
+            throw new RuntimeException("Cancellation already requested and pending review");
+        }
+
+        boolean hasStarted = !order.getCheckInDate().isAfter(LocalDate.now());
+        if (hasStarted) {
+            order.setStatus(Order.OrderStatus.CANCEL_REQUESTED);
+        } else {
+            order.setStatus(Order.OrderStatus.CANCELLED);
+        }
         orderMapper.updateById(order);
+        return order;
+    }
+
+    public IPage<Order> getOrdersForLandlord(Long landlordId, int page, int size) {
+        List<Property> properties = propertyMapper.selectList(new QueryWrapper<Property>().eq("landlord_id", landlordId));
+        if (properties == null || properties.isEmpty()) {
+            Page<Order> empty = new Page<>(page + 1, size);
+            empty.setTotal(0);
+            empty.setRecords(Collections.emptyList());
+            return empty;
+        }
+        Set<Long> propertyIds = properties.stream().map(Property::getId).collect(Collectors.toSet());
+        Page<Order> pageParam = new Page<>(page + 1, size);
+        QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("property_id", propertyIds).orderByDesc("created_at");
+        IPage<Order> orders = orderMapper.selectPage(pageParam, queryWrapper);
+        attachPropertiesAndUsers(orders);
+        return orders;
+    }
+
+    @Transactional
+    public Order reviewCancellation(Long orderId, Long landlordId, boolean approve) {
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new RuntimeException("Order not found");
+        }
+        Property property = propertyMapper.selectById(order.getPropertyId());
+        if (property == null) {
+            throw new RuntimeException("Property not found for order");
+        }
+        if (!property.getLandlordId().equals(landlordId)) {
+            throw new RuntimeException("Unauthorized to review this order");
+        }
+        if (order.getStatus() != Order.OrderStatus.CANCEL_REQUESTED) {
+            throw new RuntimeException("No cancellation request to review");
+        }
+        order.setStatus(approve ? Order.OrderStatus.CANCELLED : Order.OrderStatus.CANCEL_REJECTED);
+        orderMapper.updateById(order);
+        return order;
+    }
+
+    private void attachProperties(IPage<Order> orders) {
+        Set<Long> propertyIds = new HashSet<>();
+        orders.getRecords().forEach(order -> {
+            if (order.getPropertyId() != null) {
+                propertyIds.add(order.getPropertyId());
+            }
+        });
+        if (!propertyIds.isEmpty()) {
+            Map<Long, Property> propertyMap = propertyMapper.selectBatchIds(propertyIds)
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(Property::getId, Function.identity(), (existing, replacement) -> existing));
+            orders.getRecords().forEach(order -> order.setProperty(propertyMap.get(order.getPropertyId())));
+        }
+    }
+
+    private void attachPropertiesAndUsers(IPage<Order> orders) {
+        Set<Long> propertyIds = new HashSet<>();
+        Set<Long> userIds = new HashSet<>();
+        orders.getRecords().forEach(order -> {
+            if (order.getPropertyId() != null) {
+                propertyIds.add(order.getPropertyId());
+            }
+            if (order.getUserId() != null) {
+                userIds.add(order.getUserId());
+            }
+        });
+        Map<Long, Property> propertyMap = Collections.emptyMap();
+        if (!propertyIds.isEmpty()) {
+            propertyMap = propertyMapper.selectBatchIds(propertyIds)
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(Property::getId, Function.identity(), (existing, replacement) -> existing));
+        }
+        Map<Long, User> userMap = Collections.emptyMap();
+        if (!userIds.isEmpty()) {
+            userMap = userMapper.selectBatchIds(userIds)
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(User::getId, Function.identity(), (existing, replacement) -> existing));
+        }
+        Map<Long, Property> finalPropertyMap = propertyMap;
+        Map<Long, User> finalUserMap = userMap;
+        orders.getRecords().forEach(order -> {
+            order.setProperty(finalPropertyMap.get(order.getPropertyId()));
+            order.setUser(finalUserMap.get(order.getUserId()));
+        });
     }
 }

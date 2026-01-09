@@ -22,6 +22,11 @@
               {{ formatDate(scope.row.checkOutDate) }}
             </template>
           </el-table-column>
+          <el-table-column label="类型" width="100">
+            <template #default="scope">
+              <el-tag type="info">{{ getOrderType(scope.row) }}</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="人数" width="80">
             <template #default="scope">
               {{ scope.row.guestCount }}人
@@ -47,14 +52,16 @@
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="scope">
               <el-button
-                v-if="scope.row.status === 'PENDING'"
+                v-if="canCancel(scope.row)"
                 type="danger"
                 size="small"
                 @click="handleCancel(scope.row.id)"
               >
                 取消订单
               </el-button>
-              <span v-else style="color: #999">无法取消</span>
+              <span v-else style="color: #999">
+                {{ scope.row.status === 'CANCEL_REQUESTED' ? '等待审核' : '无法取消' }}
+              </span>
             </template>
           </el-table-column>
         </el-table>
@@ -120,7 +127,7 @@ const handleCancel = async (id) => {
 
     const response = await orderService.cancelOrder(id)
     if (response.success) {
-      ElMessage.success('取消成功')
+      ElMessage.success(response.message || '操作成功')
       fetchOrders()
     }
   } catch (error) {
@@ -143,7 +150,9 @@ const getStatusType = (status) => {
     PENDING: 'warning',
     CONFIRMED: '',
     CANCELLED: 'danger',
-    COMPLETED: 'success'
+    COMPLETED: 'success',
+    CANCEL_REQUESTED: 'warning',
+    CANCEL_REJECTED: 'info'
   }
   return map[status] || ''
 }
@@ -153,9 +162,21 @@ const getStatusText = (status) => {
     PENDING: '待确认',
     CONFIRMED: '已确认',
     CANCELLED: '已取消',
-    COMPLETED: '已完成'
+    COMPLETED: '已完成',
+    CANCEL_REQUESTED: '退订审核中',
+    CANCEL_REJECTED: '退订被拒'
   }
   return map[status] || status
+}
+
+const getOrderType = (order) => {
+  if (!order?.checkInDate) return '预定'
+  return dayjs(order.checkInDate).isAfter(dayjs(), 'day') ? '预定' : '已使用'
+}
+
+const canCancel = (order) => {
+  const blocked = ['CANCELLED', 'COMPLETED', 'CANCEL_REQUESTED']
+  return !blocked.includes(order.status)
 }
 </script>
 

@@ -49,6 +49,6 @@ public class Order {
     private LocalDateTime updatedAt;
 
     public enum OrderStatus {
-        PENDING, CONFIRMED, CANCELLED, COMPLETED
+        PENDING, CONFIRMED, CANCELLED, COMPLETED, CANCEL_REQUESTED, CANCEL_REJECTED
     }
 }

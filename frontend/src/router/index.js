@@ -52,6 +52,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/landlord/orders',
+    name: 'LandlordOrders',
+    component: () => import('../views/LandlordOrdersPage.vue'),
+    meta: { requiresAuth: true, requiresLandlord: true }
+  },
+  {
+    path: '/landlord/create-property',
+    name: 'CreateProperty',
+    component: () => import('../views/CreatePropertyPage.vue'),
+    meta: { requiresAuth: true, requiresLandlord: true }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('../views/ProfilePage.vue'),
@@ -59,7 +71,7 @@ const routes = [
   },
   {
     path: '/create-property',
-    redirect: '/my-properties'
+    redirect: '/landlord/create-property'
   }
 ]
 
@@ -77,6 +89,9 @@ router.beforeEach((to, from, next) => {
   } else if (to.meta.requiresLandlord && !userStore.isLandlord) {
     // 非房东访问房东专属页面时，返回首页
     next({ name: 'Home' })
+  } else if (userStore.isLandlord && ['Home', 'PropertyList', 'Recommendations'].includes(to.name)) {
+    // 房东不进入房源展示/搜索页面
+    next({ name: 'MyProperties' })
   } else if (to.name === 'Login' && userStore.isAuthenticated) {
     // 如果用户已登录且尝试访问登录页，重定向到首页
     next({ name: 'Home' })

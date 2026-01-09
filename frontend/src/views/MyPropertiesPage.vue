@@ -2,6 +2,9 @@
   <div class="my-properties-page">
     <div class="header">
       <h2>房源信息</h2>
+      <el-button type="primary" size="small" @click="$router.push('/landlord/create-property')">
+        发布房源
+      </el-button>
     </div>
 
     <el-table :data="properties" v-loading="loading" stripe>
