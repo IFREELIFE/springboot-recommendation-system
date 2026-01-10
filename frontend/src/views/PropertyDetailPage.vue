@@ -55,6 +55,21 @@
         <p>{{ property.description || '暂无描述' }}</p>
       </el-card>
 
+      <el-card v-if="availabilityRows.length" style="margin-top: 24px">
+        <template #header>未来可预订余量</template>
+        <el-table :data="availabilityRows" size="small">
+          <el-table-column prop="date" label="日期" width="140" />
+          <el-table-column label="剩余房间" width="140">
+            <template #default="scope">
+              <el-tag :type="scope.row.remainingRooms > 0 ? 'success' : 'danger'">
+                {{ scope.row.remainingRooms }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="remainingGuests" label="可住人数" />
+        </el-table>
+      </el-card>
+
       <el-card v-if="amenities.length > 0" style="margin-top: 24px">
         <template #header>设施与服务</template>
         <el-tag v-for="amenity in amenities" :key="amenity" style="margin: 4px">
@@ -153,11 +168,34 @@ const amenities = computed(() => {
 
 const rating = computed(() => Number(property.value?.rating) || 0)
 
+const availabilityRows = computed(() =>
+  (property.value?.upcomingAvailability || []).map((item) => ({
+    date: item.date ? dayjs(item.date).format('YYYY-MM-DD') : '',
+    remainingRooms: Number(item.remainingRooms ?? 0),
+    remainingGuests: Number(item.remainingGuests ?? 0)
+  }))
+)
+
+const availabilityMap = computed(() => {
+  const map = new Map()
+  ;(property.value?.upcomingAvailability || []).forEach((item) => {
+    if (item.date) {
+      map.set(dayjs(item.date).format('YYYY-MM-DD'), Number(item.remainingRooms ?? 0))
+    }
+  })
+  return map
+})
+
 const disabledDate = (time) => {
-  return time.getTime() < Date.now() - 8.64e7
+  const dateStr = dayjs(time).format('YYYY-MM-DD')
+  const remaining = availabilityMap.value.get(dateStr)
+  const isPast = time.getTime() < Date.now() - 8.64e7
+  const noInventory = remaining !== undefined && remaining <= 0
+  return isPast || noInventory
 }
 
-onMounted(async () => {
+const loadProperty = async () => {
+  loading.value = true
   try {
     const response = await propertyService.getPropertyById(route.params.id)
     if (response.success) {
@@ -176,7 +214,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadProperty)
 
 const showBookingDialog = () => {
   if (!isAuthenticated.value) {
@@ -204,9 +244,11 @@ const handleBooking = async () => {
 
     const response = await orderService.createOrder(orderData)
     if (response.success) {
-      ElMessage.success('预订成功！')
+      ElMessage.success('预订成功！房源余量已更新')
       bookingDialogVisible.value = false
-      router.push('/my-orders')
+      await loadProperty()
+      bookingForm.dates = []
+      bookingForm.remarks = ''
     }
   } catch (error) {
     ElMessage.error(error.message || '预订失败')
