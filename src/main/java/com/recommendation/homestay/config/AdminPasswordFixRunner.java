@@ -3,6 +3,7 @@ package com.recommendation.homestay.config;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.UserMapper;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +28,7 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
     public AdminPasswordFixRunner(UserMapper userMapper,
                                   PasswordEncoder passwordEncoder,
                                   @Value("${admin.default.password:admin123}") String defaultAdminPassword,
-                                  // Default matches the legacy seed hash that shipped with previous releases
+                                  // Default matches the incorrect placeholder bcrypt value shipped in earlier seed data
                                   @Value("${admin.legacy.placeholder-hash:$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu}")
                                   String legacyPlaceholderHash,
                                   @Value("${admin.legacy.fix-enabled:true}") boolean legacyFixEnabled) {
@@ -47,7 +48,7 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
         queryWrapper.eq("username", "admin");
         User admin = userMapper.selectOne(queryWrapper);
 
-        if (legacyFixEnabled && admin != null && legacyPlaceholderHash.equals(admin.getPassword())) {
+        if (legacyFixEnabled && admin != null && Objects.equals(admin.getPassword(), legacyPlaceholderHash)) {
             admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
             int updated = userMapper.updateById(admin);
             if (updated > 0) {
