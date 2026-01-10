@@ -16,5 +16,4 @@ CREATE TABLE IF NOT EXISTS admin_accounts (
 INSERT IGNORE INTO admin_accounts (user_id, display_name, status)
 SELECT id, username, 'ACTIVE'
 FROM users
-WHERE role = 'ADMIN'
-LIMIT 1;
+WHERE role = 'ADMIN';
