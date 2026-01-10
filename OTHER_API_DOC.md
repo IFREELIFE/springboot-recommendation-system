@@ -59,9 +59,23 @@
 | GET | `/api/properties/{id}` | 路径参数 id | 获取房源详情并增加浏览量 | `PropertyResponseDTO` |
 | GET | `/api/properties` | `page` `size` | 分页获取房源列表 | `PageResponse<Property>` |
 | GET | `/api/properties/landlord/my-properties` | `page` `size` | 获取当前房东的房源（需房东/管理员） | `PageResponse<Property>` |
+| GET | `/api/properties/landlord/occupancy` | `page` `size` | 房东查看名下房源的入住与剩余房间（需房东/管理员） | `PageResponse<PropertyOccupancyDTO>` |
 | GET | `/api/properties/search` | `city` `minPrice` `maxPrice` `bedrooms` `page` `size` | 条件搜索房源 | `PageResponse<Property>` |
 | GET | `/api/properties/popular` | - | 获取热门房源 | 房源列表 |
 | GET | `/api/properties/top-rated` | - | 获取高评分房源 | 房源列表 |
+
+---
+
+## 管理员模块
+
+路径前缀：`/api/admin`，需管理员权限。
+
+| 方法 | 地址 | 接收参数 | 作用 | 返回结果 |
+| --- | --- | --- | --- | --- |
+| GET | `/api/admin/users` | `role`(可选，USER/LANDLORD/ADMIN)、`page`、`size` | 查看用户/房东列表及状态 | `PageResponse<AdminAccountDTO>` |
+| PUT | `/api/admin/users/{id}/freeze` | 路径参数 id，`freeze`(bool，默认 true) | 冻结或解冻指定账户 | 更新后的 `AdminAccountDTO` |
+| GET | `/api/admin/properties/occupancy` | `landlordId`(可选)、`page`、`size` | 查看房源入住与剩余情况 | `PageResponse<PropertyOccupancyDTO>` |
+| PUT | `/api/admin/properties/{id}/freeze` | 路径参数 id，`freeze`(bool，默认 true) | 冻结或解冻指定房源 | 更新后的 `Property` |
 
 ---
 
@@ -75,5 +89,7 @@
 | GET | `/api/orders/{id}` | 路径参数 id | 按 ID 查询订单 | `Order` |
 | GET | `/api/orders/number/{orderNumber}` | 路径参数 orderNumber | 按订单号查询 | `Order` |
 | GET | `/api/orders/my-orders` | `page` `size` | 获取当前用户订单 | `PageResponse<Order>` |
+| GET | `/api/orders/landlord` | `page` `size` | 房东查看旗下房源订单（需房东/管理员） | `PageResponse<Order>` |
 | PUT | `/api/orders/{id}/status` | 路径参数 id，`status`(string，枚举：PENDING/CONFIRMED/CANCELLED/COMPLETED) | 更新订单状态 | 更新后的 `Order` |
 | DELETE | `/api/orders/{id}` | 路径参数 id | 取消订单 | 成功消息 |
+| POST | `/api/orders/{id}/review` | 路径参数 id，`approve`(bool，默认 true) | 房东审核退订请求（需房东/管理员） | 更新后的 `Order` |
