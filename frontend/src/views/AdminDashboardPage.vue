@@ -1,6 +1,9 @@
 <template>
   <div class="admin-page">
-    <h2>管理员控制台</h2>
+    <div class="top-bar">
+      <h2>管理员控制台</h2>
+      <el-button type="danger" plain @click="logout">退出登录</el-button>
+    </div>
     <el-card>
       <el-tabs v-model="activeTab">
         <el-tab-pane label="用户账户" name="users">
@@ -126,10 +129,14 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import adminService from '../services/adminService'
+import { useUserStore } from '../store/user'
 
 const activeTab = ref('users')
+const router = useRouter()
+const userStore = useUserStore()
 
 const userFilters = reactive({
   page: 0,
@@ -289,12 +296,24 @@ onMounted(() => {
   loadLandlords()
   loadProperties()
 })
+
+const logout = () => {
+  userStore.logout()
+  router.push('/login')
+}
 </script>
 
 <style scoped>
 .admin-page {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .toolbar {
