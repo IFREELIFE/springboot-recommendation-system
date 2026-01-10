@@ -86,8 +86,14 @@ const handleSubmit = async () => {
         userStore.setUser(user)
         userStore.setToken(user.token)
         ElMessage.success('登录成功！')
-        // 使用 nextTick 确保状态更新后再导航
-        await router.push('/')
+        // 登录成功后根据角色跳转
+        if (userStore.isAdmin) {
+          await router.push('/admin')
+        } else if (userStore.isLandlord) {
+          await router.push('/my-properties')
+        } else {
+          await router.push('/')
+        }
       } catch (error) {
         ElMessage.error(error.message || '登录失败，请检查用户名和密码')
       } finally {
