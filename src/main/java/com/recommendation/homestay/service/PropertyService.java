@@ -267,9 +267,7 @@ public class PropertyService {
         QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
         queryWrapper.in("property_id", propertyIds);
         queryWrapper.in("status", Arrays.asList(
-                Order.OrderStatus.PENDING.name(),
-                Order.OrderStatus.CONFIRMED.name(),
-                Order.OrderStatus.CANCEL_REQUESTED.name()
+                Order.OrderStatus.CONFIRMED.name()
         ));
         queryWrapper.le("check_in_date", today);
         queryWrapper.gt("check_out_date", today);

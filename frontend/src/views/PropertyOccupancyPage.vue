@@ -66,7 +66,7 @@ const pagination = reactive({
 const tableRows = computed(() =>
   occupancyList.value.map((p) => {
     const rooms = Number(p.bedrooms || 0)
-    const occupiedRooms = Number(p.occupiedRooms ?? p.bookingCount ?? 0)
+    const occupiedRooms = Number(p.occupiedRooms ?? 0)
     const remainingRooms = Number(p.remainingRooms ?? Math.max(rooms - occupiedRooms, 0))
     const occupancyRate = rooms > 0 ? `${((occupiedRooms / rooms) * 100).toFixed(0)}%` : '0%'
     return {
@@ -89,8 +89,8 @@ const fetchData = async () => {
     })
     if (response.success) {
       const payload = response.data || {}
-      occupancyList.value = payload.content || payload.records || []
-      pagination.total = payload.totalElements || payload.total || 0
+      occupancyList.value = payload.content || []
+      pagination.total = payload.totalElements || 0
     }
   } catch (error) {
     console.error('Failed to load occupancy data', error)
