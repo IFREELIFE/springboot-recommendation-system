@@ -57,6 +57,11 @@ const propertyService = {
   async getMyProperties(params) {
     const response = await api.get('/properties/landlord/my-properties', { params })
     return response.data
+  },
+
+  async getPropertyOccupancy(params) {
+    const response = await api.get('/properties/landlord/occupancy', { params })
+    return response.data
   }
 }
 

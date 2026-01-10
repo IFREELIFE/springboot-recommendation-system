@@ -6,11 +6,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recommendation.homestay.config.UploadUtils;
+import com.recommendation.homestay.dto.PropertyOccupancyDTO;
+import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyRequest;
 import com.recommendation.homestay.dto.PropertyResponseDTO;
+import com.recommendation.homestay.entity.Order;
 import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.entity.PropertyDocument;
 import com.recommendation.homestay.entity.User;
+import com.recommendation.homestay.mapper.OrderMapper;
 import com.recommendation.homestay.mapper.PropertyMapper;
 import com.recommendation.homestay.mapper.UserMapper;
 import com.recommendation.homestay.repository.PropertyDocumentRepository;
@@ -33,13 +37,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,6 +61,9 @@ public class PropertyService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private OrderMapper orderMapper;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -197,6 +209,102 @@ public class PropertyService {
         QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("landlord_id", landlordId);
         return propertyMapper.selectPage(pageParam, queryWrapper);
+    }
+
+    public PageResponse<PropertyOccupancyDTO> getPropertyOccupancy(Long landlordId, int page, int size) {
+        IPage<Property> properties = getPropertiesByLandlord(landlordId, page, size);
+
+        PageResponse<PropertyOccupancyDTO> response = new PageResponse<>();
+        response.setTotal(properties.getTotal());
+        response.setSize(properties.getSize());
+        response.setCurrent(properties.getCurrent());
+        response.setPages(properties.getPages());
+
+        List<Property> records = properties.getRecords();
+        if (records == null || records.isEmpty()) {
+            response.setRecords(new ArrayList<>());
+            return response;
+        }
+
+        List<Long> propertyIds = records.stream()
+                .map(Property::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        Map<Long, OccupancyCounter> occupancyMap = loadActiveOccupancy(propertyIds);
+
+        List<PropertyOccupancyDTO> dtoList = records.stream().map(p -> {
+            OccupancyCounter counter = occupancyMap.getOrDefault(p.getId(), new OccupancyCounter());
+            int bedrooms = Optional.ofNullable(p.getBedrooms()).orElse(0);
+            int occupiedRooms = counter.getOccupiedRooms();
+            int remainingRooms = Math.max(bedrooms - occupiedRooms, 0);
+
+            PropertyOccupancyDTO dto = new PropertyOccupancyDTO();
+            dto.setId(p.getId());
+            dto.setTitle(p.getTitle());
+            dto.setCity(p.getCity());
+            dto.setAddress(p.getAddress());
+            dto.setPrice(p.getPrice());
+            dto.setBedrooms(p.getBedrooms());
+            dto.setMaxGuests(p.getMaxGuests());
+            dto.setPropertyType(p.getPropertyType());
+            dto.setBookingCount(p.getBookingCount());
+            dto.setOccupiedRooms(occupiedRooms);
+            dto.setRemainingRooms(remainingRooms);
+            dto.setActiveGuests(counter.getActiveGuests());
+            return dto;
+        }).collect(Collectors.toList());
+
+        response.setRecords(dtoList);
+        return response;
+    }
+
+    private Map<Long, OccupancyCounter> loadActiveOccupancy(List<Long> propertyIds) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        LocalDate today = LocalDate.now();
+        QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("property_id", propertyIds);
+        queryWrapper.in("status", Arrays.asList(
+                Order.OrderStatus.PENDING.name(),
+                Order.OrderStatus.CONFIRMED.name(),
+                Order.OrderStatus.COMPLETED.name(),
+                Order.OrderStatus.CANCEL_REQUESTED.name(),
+                Order.OrderStatus.CANCEL_REJECTED.name()
+        ));
+        queryWrapper.le("check_in_date", today);
+        queryWrapper.gt("check_out_date", today);
+
+        List<Order> activeOrders = orderMapper.selectList(queryWrapper);
+        Map<Long, OccupancyCounter> stats = new HashMap<>();
+        for (Order order : activeOrders) {
+            OccupancyCounter counter = stats.computeIfAbsent(order.getPropertyId(), key -> new OccupancyCounter());
+            counter.incrementOccupiedRooms();
+            counter.addGuests(Optional.ofNullable(order.getGuestCount()).orElse(0));
+        }
+        return stats;
+    }
+
+    private static class OccupancyCounter {
+        private int occupiedRooms;
+        private int activeGuests;
+
+        void incrementOccupiedRooms() {
+            this.occupiedRooms++;
+        }
+
+        void addGuests(int guests) {
+            this.activeGuests += guests;
+        }
+
+        int getOccupiedRooms() {
+            return occupiedRooms;
+        }
+
+        int getActiveGuests() {
+            return activeGuests;
+        }
     }
 
     public IPage<Property> searchProperties(String city, BigDecimal minPrice,

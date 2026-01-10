@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.recommendation.homestay.config.UploadUtils;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.PageResponse;
+import com.recommendation.homestay.dto.PropertyOccupancyDTO;
 import com.recommendation.homestay.dto.PropertyRequest;
 import com.recommendation.homestay.dto.PropertyResponseDTO;
 import com.recommendation.homestay.entity.Property;
@@ -295,6 +296,22 @@ public class PropertyController {
             IPage<Property> properties = propertyService.getPropertiesByLandlord(currentUser.getId(), page, size);
             PageResponse<Property> pageResponse = PageResponse.fromIPage(properties);
             return ResponseEntity.ok(new ApiResponse(true, "房东房源列表获取成功", pageResponse));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @GetMapping("/landlord/occupancy")
+    @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
+    @Operation(summary = "房源入住与剩余房间", description = "房东查看房源的入住人数和剩余房间")
+    public ResponseEntity<?> getPropertyOccupancy(
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            PageResponse<PropertyOccupancyDTO> pageResponse = propertyService.getPropertyOccupancy(currentUser.getId(), page, size);
+            return ResponseEntity.ok(new ApiResponse(true, "房源入住情况获取成功", pageResponse));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));

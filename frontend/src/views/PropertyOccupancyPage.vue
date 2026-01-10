@@ -4,7 +4,7 @@
       <h2>房源入住与剩余房间</h2>
     </div>
 
-    <el-table :data="rows" v-loading="loading" stripe>
+    <el-table :data="tableRows" v-loading="loading" stripe>
       <el-table-column label="房源名称">
         <template #default="scope">
           <a
@@ -16,13 +16,19 @@
         </template>
       </el-table-column>
       <el-table-column prop="city" label="城市" width="100" />
+      <el-table-column prop="address" label="地址" min-width="160" show-overflow-tooltip />
       <el-table-column prop="rooms" label="房间总数" width="110" />
-      <el-table-column prop="bookedRooms" label="已预订房间" width="120" />
+      <el-table-column prop="occupiedRooms" label="已入住房间" width="120" />
       <el-table-column prop="remainingRooms" label="剩余房间" width="110">
         <template #default="scope">
           <el-tag :type="scope.row.remainingRooms > 0 ? 'success' : 'danger'">
             {{ scope.row.remainingRooms }}
           </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="当前入住人数" width="130">
+        <template #default="scope">
+          <el-tag type="info">{{ scope.row.activeGuests }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="入住率" width="110">
@@ -50,26 +56,26 @@ import { ElMessage } from 'element-plus'
 import propertyService from '../services/propertyService'
 
 const loading = ref(false)
-const properties = ref([])
+const occupancyList = ref([])
 const pagination = reactive({
   page: 1,
   size: 10,
   total: 0
 })
 
-const rows = computed(() =>
-  properties.value.map((p) => {
+const tableRows = computed(() =>
+  occupancyList.value.map((p) => {
     const rooms = Number(p.bedrooms || 0)
-    // 假设 bookingCount 表示每间房的预订次数，如数据模型变化需调整
-    const bookedRooms = Number(p.bookingCount || 0)
-    const remainingRooms = Math.max(rooms - bookedRooms, 0)
-    const occupancyRate = rooms > 0 ? `${((bookedRooms / rooms) * 100).toFixed(0)}%` : '0%'
+    const occupiedRooms = Number(p.occupiedRooms ?? p.bookingCount ?? 0)
+    const remainingRooms = Number(p.remainingRooms ?? Math.max(rooms - occupiedRooms, 0))
+    const occupancyRate = rooms > 0 ? `${((occupiedRooms / rooms) * 100).toFixed(0)}%` : '0%'
     return {
       ...p,
       rooms,
-      bookedRooms,
+      occupiedRooms,
       remainingRooms,
-      occupancyRate
+      occupancyRate,
+      activeGuests: Number(p.activeGuests || 0)
     }
   })
 )
@@ -77,12 +83,12 @@ const rows = computed(() =>
 const fetchData = async () => {
   loading.value = true
   try {
-    const response = await propertyService.getMyProperties({
+    const response = await propertyService.getPropertyOccupancy({
       page: pagination.page - 1,
       size: pagination.size
     })
     if (response.success) {
-      properties.value = response.data.content || []
+      occupancyList.value = response.data.content || []
       pagination.total = response.data.totalElements || 0
     }
   } catch (error) {
