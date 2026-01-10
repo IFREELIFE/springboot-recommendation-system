@@ -9,6 +9,7 @@ import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyOccupancyDTO;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.UserMapper;
+import com.recommendation.homestay.security.UserPrincipal;
 import com.recommendation.homestay.service.PropertyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -69,11 +71,16 @@ public class AdminController {
     @Transactional
     public ResponseEntity<?> freezeAccount(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "true") boolean freeze) {
+            @RequestParam(defaultValue = "true") boolean freeze,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
         User user = userMapper.selectById(id);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse(false, "未找到用户"));
+        }
+        if (currentUser != null && currentUser.getId().equals(id)) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "不能冻结当前登录的管理员账号"));
         }
         if (user.getRole() == User.Role.ADMIN) {
             return ResponseEntity.badRequest()
