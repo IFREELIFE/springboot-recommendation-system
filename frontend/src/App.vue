@@ -24,7 +24,11 @@ const userStore = useUserStore()
 const locale = zhCn
 
 const isAuthPage = computed(() => {
-  return route.path === '/login' || route.path === '/register'
+  return (
+    route.path === '/login' ||
+    route.path === '/register' ||
+    route.path.startsWith('/admin')
+  )
 })
 
 onMounted(() => {
