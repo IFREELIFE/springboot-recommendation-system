@@ -67,7 +67,7 @@ const tableRows = computed(() =>
   occupancyList.value.map((p) => {
     const rooms = Number(p.bedrooms || 0)
     const occupiedRooms = Number(p.occupiedRooms ?? 0)
-    const remainingRooms = Number(p.remainingRooms ?? Math.max(rooms - occupiedRooms, 0))
+    const remainingRooms = Number(p.remainingRooms ?? 0)
     const occupancyRate = rooms > 0 ? `${((occupiedRooms / rooms) * 100).toFixed(0)}%` : '0%'
     return {
       ...p,
