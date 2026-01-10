@@ -22,16 +22,20 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final String defaultAdminPassword;
     private final String legacyPlaceholderHash;
+    private final boolean legacyFixEnabled;
 
     public AdminPasswordFixRunner(UserMapper userMapper,
                                   PasswordEncoder passwordEncoder,
                                   @Value("${admin.default.password:admin123}") String defaultAdminPassword,
+                                  // Default matches the legacy seed hash that shipped with previous releases
                                   @Value("${admin.legacy.placeholder-hash:$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu}")
-                                  String legacyPlaceholderHash) {
+                                  String legacyPlaceholderHash,
+                                  @Value("${admin.legacy.fix-enabled:true}") boolean legacyFixEnabled) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.defaultAdminPassword = defaultAdminPassword;
         this.legacyPlaceholderHash = legacyPlaceholderHash;
+        this.legacyFixEnabled = legacyFixEnabled;
     }
 
     /**
@@ -43,7 +47,7 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
         queryWrapper.eq("username", "admin");
         User admin = userMapper.selectOne(queryWrapper);
 
-        if (admin != null && legacyPlaceholderHash.equals(admin.getPassword())) {
+        if (legacyFixEnabled && admin != null && legacyPlaceholderHash.equals(admin.getPassword())) {
             admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
             int updated = userMapper.updateById(admin);
             if (updated > 0) {
