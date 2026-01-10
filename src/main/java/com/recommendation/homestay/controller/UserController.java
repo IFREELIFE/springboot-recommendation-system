@@ -23,7 +23,8 @@ import javax.validation.Valid;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @PreAuthorize("isAuthenticated()")
 @Tag(name = "User", description = "用户个人信息接口")
-public class UserController {
+public class
+UserController {
 
     @Autowired
     private UserMapper userMapper;
