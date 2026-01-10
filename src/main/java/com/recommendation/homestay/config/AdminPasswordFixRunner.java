@@ -28,7 +28,7 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
     public AdminPasswordFixRunner(UserMapper userMapper,
                                   PasswordEncoder passwordEncoder,
                                   @Value("${admin.default.password:admin123}") String defaultAdminPassword,
-                                  // Default matches the incorrect placeholder bcrypt value shipped in earlier seed data
+                                  // Default matches the incorrect, repeating placeholder bcrypt value shipped in earlier seed data
                                   @Value("${admin.legacy.placeholder-hash:$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu}")
                                   String legacyPlaceholderHash,
                                   @Value("${admin.legacy.fix-enabled:true}") boolean legacyFixEnabled) {
@@ -41,6 +41,7 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
 
     /**
      * Executes at application startup to replace the legacy admin password hash if it is still present.
+     * The operation is idempotent so concurrent starts simply rewrite the same value once.
      */
     @Override
     public void run(String... args) {
