@@ -11,7 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
- * 修复历史种子数据中管理员密码哈希不正确的问题。
+ * Fixes the incorrect admin password hash left by legacy seed data.
  */
 @Component
 public class AdminPasswordFixRunner implements CommandLineRunner {
