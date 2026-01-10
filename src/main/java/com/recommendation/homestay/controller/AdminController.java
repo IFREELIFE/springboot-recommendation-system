@@ -16,17 +16,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
 @CrossOrigin(origins = "*", maxAge = 3600)
-@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 @Tag(name = "Admin", description = "管理员端接口")
 public class AdminController {
 
@@ -66,6 +66,7 @@ public class AdminController {
 
     @PutMapping("/users/{id}/freeze")
     @Operation(summary = "冻结或解冻账户", description = "管理员可对用户与房东账户进行冻结或解冻")
+    @Transactional
     public ResponseEntity<?> freezeAccount(
             @PathVariable Long id,
             @RequestParam(defaultValue = "true") boolean freeze) {
@@ -119,7 +120,7 @@ public class AdminController {
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
         dto.setRole(user.getRole());
-        dto.setEnabled(Optional.ofNullable(user.getEnabled()).orElse(Boolean.TRUE));
+        dto.setEnabled(user.getEnabled());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
         return dto;
