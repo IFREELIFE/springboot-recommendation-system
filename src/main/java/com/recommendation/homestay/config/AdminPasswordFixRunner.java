@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class AdminPasswordFixRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AdminPasswordFixRunner.class);
+    // Legacy hash persisted by earlier seed scripts that blocks admin login
     private static final String LEGACY_PLACEHOLDER_HASH =
             "$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu";
 
@@ -38,10 +39,14 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
         queryWrapper.eq("username", "admin");
         User admin = userMapper.selectOne(queryWrapper);
 
-        if (admin != null && LEGACY_PLACEHOLDER_HASH.equals(admin.getPassword())) {
+        if (admin != null && admin.getPassword() != null && LEGACY_PLACEHOLDER_HASH.equals(admin.getPassword())) {
             admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
-            userMapper.updateById(admin);
-            log.info("Admin password hash was updated from legacy placeholder.");
+            int updated = userMapper.updateById(admin);
+            if (updated > 0) {
+                log.info("Admin password hash was updated from legacy placeholder.");
+            } else {
+                log.warn("Failed to update admin password hash from legacy placeholder.");
+            }
         }
     }
 }
