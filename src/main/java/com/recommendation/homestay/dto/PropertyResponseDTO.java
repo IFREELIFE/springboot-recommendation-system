@@ -31,4 +31,5 @@ public class PropertyResponseDTO {
     private String images;
     private List<String> imagesBase64;
     private Integer remainingRooms;
+    private List<DailyAvailabilityDTO> upcomingAvailability;
 }

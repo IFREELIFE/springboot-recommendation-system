@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recommendation.homestay.config.UploadUtils;
+import com.recommendation.homestay.dto.DailyAvailabilityDTO;
 import com.recommendation.homestay.dto.PropertyOccupancyDTO;
 import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyRequest;
@@ -44,17 +45,28 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class PropertyService {
 
     private static final Logger log = LoggerFactory.getLogger(PropertyService.class);
+    private static final int DEFAULT_AVAILABILITY_DAYS = 14;
+    private static final int MAX_AVAILABILITY_DAYS = 60;
+    private static final Set<Order.OrderStatus> RESERVED_STATUSES = EnumSet.of(
+            Order.OrderStatus.PENDING,
+            Order.OrderStatus.CONFIRMED,
+            Order.OrderStatus.CANCEL_REQUESTED,
+            Order.OrderStatus.CANCEL_REJECTED
+    );
 
     @Autowired
     private PropertyMapper propertyMapper;
@@ -298,9 +310,9 @@ public class PropertyService {
         LocalDate today = LocalDate.now();
         QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
         queryWrapper.in("property_id", propertyIds);
-        queryWrapper.in("status", Arrays.asList(
-                Order.OrderStatus.CONFIRMED.name()
-        ));
+        queryWrapper.in("status", RESERVED_STATUSES.stream()
+                .map(Enum::name)
+                .collect(Collectors.toList()));
         queryWrapper.le("check_in_date", today);
         queryWrapper.gt("check_out_date", today);
 
@@ -312,6 +324,29 @@ public class PropertyService {
             counter.addGuests(Optional.ofNullable(order.getGuestCount()).orElse(0));
         }
         return stats;
+    }
+
+    private static class DailyCounter {
+        private int bookedRooms;
+        private int bookedGuests;
+
+        void incrementRooms() {
+            this.bookedRooms++;
+        }
+
+        void addGuests(int guests) {
+            if (guests > 0) {
+                this.bookedGuests += guests;
+            }
+        }
+
+        int getBookedRooms() {
+            return bookedRooms;
+        }
+
+        int getBookedGuests() {
+            return bookedGuests;
+        }
     }
 
     private static class OccupancyCounter {
@@ -493,6 +528,59 @@ public class PropertyService {
         return city == null ? null : city.toLowerCase(Locale.ROOT);
     }
 
+    private List<DailyAvailabilityDTO> buildDailyAvailability(Property property, LocalDate startDate, int days) {
+        if (property == null || property.getId() == null) {
+            return Collections.emptyList();
+        }
+        LocalDate start = Optional.ofNullable(startDate).orElse(LocalDate.now());
+        int window = Math.max(1, Math.min(days, MAX_AVAILABILITY_DAYS));
+        LocalDate endDate = start.plusDays(window);
+
+        QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("property_id", property.getId());
+        queryWrapper.in("status", RESERVED_STATUSES.stream()
+                .map(Enum::name)
+                .collect(Collectors.toList()));
+        queryWrapper.lt("check_in_date", endDate);
+        queryWrapper.gt("check_out_date", start);
+
+        List<Order> overlappedOrders = orderMapper.selectList(queryWrapper);
+        Map<LocalDate, DailyCounter> counters = new LinkedHashMap<>();
+        for (int i = 0; i < window; i++) {
+            counters.put(start.plusDays(i), new DailyCounter());
+        }
+
+        for (Order order : overlappedOrders) {
+            if (order.getCheckInDate() == null || order.getCheckOutDate() == null) {
+                continue;
+            }
+            LocalDate effectiveStart = order.getCheckInDate().isBefore(start) ? start : order.getCheckInDate();
+            LocalDate effectiveEnd = order.getCheckOutDate().isAfter(endDate) ? endDate : order.getCheckOutDate();
+            for (LocalDate date = effectiveStart; date.isBefore(effectiveEnd); date = date.plusDays(1)) {
+                DailyCounter counter = counters.get(date);
+                if (counter != null) {
+                    counter.incrementRooms();
+                    counter.addGuests(Optional.ofNullable(order.getGuestCount()).orElse(0));
+                }
+            }
+        }
+
+        int totalRooms = Math.max(Optional.ofNullable(property.getBedrooms()).orElse(0), 0);
+        int totalGuests = Math.max(Optional.ofNullable(property.getMaxGuests()).orElse(0), 0);
+
+        List<DailyAvailabilityDTO> availability = new ArrayList<>();
+        counters.forEach((date, counter) -> {
+            DailyAvailabilityDTO dto = new DailyAvailabilityDTO();
+            dto.setDate(date);
+            dto.setBookedRooms(counter.getBookedRooms());
+            dto.setBookedGuests(counter.getBookedGuests());
+            dto.setRemainingRooms(Math.max(totalRooms - counter.getBookedRooms(), 0));
+            dto.setRemainingGuests(Math.max(totalGuests - counter.getBookedGuests(), 0));
+            availability.add(dto);
+        });
+        return availability;
+    }
+
     public PropertyResponseDTO toResponseDTO(Property property) {
         PropertyResponseDTO dto = new PropertyResponseDTO();
         dto.setId(property.getId());
@@ -516,11 +604,18 @@ public class PropertyService {
         dto.setCreatedAt(property.getCreatedAt());
         dto.setUpdatedAt(property.getUpdatedAt());
         dto.setImages(property.getImages());
-        Map<Long, OccupancyCounter> occupancyMap = loadActiveOccupancy(Collections.singletonList(property.getId()));
-        OccupancyCounter counter = occupancyMap.getOrDefault(property.getId(), new OccupancyCounter());
-        int bedrooms = Optional.ofNullable(property.getBedrooms()).orElse(0);
-        int remainingRooms = Math.max(bedrooms - counter.getOccupiedRooms(), 0);
-        dto.setRemainingRooms(remainingRooms);
+
+        List<DailyAvailabilityDTO> availability = buildDailyAvailability(property, LocalDate.now(), DEFAULT_AVAILABILITY_DAYS);
+        dto.setUpcomingAvailability(availability);
+        if (!availability.isEmpty()) {
+            dto.setRemainingRooms(Optional.ofNullable(availability.get(0).getRemainingRooms()).orElse(0));
+        } else {
+            Map<Long, OccupancyCounter> occupancyMap = loadActiveOccupancy(Collections.singletonList(property.getId()));
+            OccupancyCounter counter = occupancyMap.getOrDefault(property.getId(), new OccupancyCounter());
+            int bedrooms = Optional.ofNullable(property.getBedrooms()).orElse(0);
+            int fallbackRemainingRooms = Math.max(bedrooms - counter.getOccupiedRooms(), 0);
+            dto.setRemainingRooms(fallbackRemainingRooms);
+        }
 
         List<String> base64List = new ArrayList<>();
         List<String> paths = new ArrayList<>();
