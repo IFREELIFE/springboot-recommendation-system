@@ -40,6 +40,9 @@ public class AdminController {
     @Autowired
     private PropertyService propertyService;
 
+    /**
+     * 接口：分页查询用户/房东账户列表，可按角色过滤。
+     */
     @GetMapping("/users")
     @Operation(summary = "用户与房东列表", description = "按角色筛选并查看所有账户状态")
     public ResponseEntity<?> listUsers(
@@ -68,6 +71,9 @@ public class AdminController {
         }
     }
 
+    /**
+     * 接口：冻结或解冻指定账户，禁止或恢复登录使用。
+     */
     @PutMapping("/users/{id}/freeze")
     @Operation(summary = "冻结或解冻账户", description = "管理员可对用户与房东账户进行冻结或解冻")
     @Transactional
@@ -101,6 +107,9 @@ public class AdminController {
         return ResponseEntity.ok(new ApiResponse(true, message, toAccountDTO(user)));
     }
 
+    /**
+     * 接口：查看所有房源的入住与剩余情况，可按房东筛选。
+     */
     @GetMapping("/properties/occupancy")
     @Operation(summary = "房源入住情况", description = "查看所有房源的入住与剩余情况，可按房东筛选")
     public ResponseEntity<?> getPropertyOccupancy(
@@ -116,6 +125,9 @@ public class AdminController {
         }
     }
 
+    /**
+     * 接口：冻结或解冻指定房源，控制房源是否可用。
+     */
     @PutMapping("/properties/{id}/freeze")
     @Operation(summary = "冻结或解冻房源", description = "管理员可禁用或启用指定房源")
     @Transactional

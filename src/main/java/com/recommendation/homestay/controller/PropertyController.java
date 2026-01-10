@@ -54,6 +54,9 @@ public class PropertyController {
     private static final int MAX_FILES = 10;
     private static final Logger log = LoggerFactory.getLogger(PropertyController.class);
 
+    /**
+     * 接口：创建房源，接收 JSON 参数。
+     */
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     @Operation(summary = "创建房源", description = "以JSON请求创建房源信息")
@@ -70,6 +73,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：创建房源并同时上传多张图片。
+     */
     @PostMapping(value = "/with-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     @Operation(summary = "创建房源并上传图片", description = "提交房源信息和图片文件完成创建")
@@ -138,6 +144,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：单独上传房源图片，可选附加到已有房源。
+     */
     @PostMapping("/upload")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     @Operation(summary = "上传房源图片", description = "单独上传房源图片，可选关联已有房源")
@@ -220,6 +229,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：根据ID更新房源基本信息。
+     */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     @Operation(summary = "更新房源", description = "根据ID更新房源基本信息")
@@ -236,6 +248,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：根据ID删除房源。
+     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     @Operation(summary = "删除房源", description = "根据ID删除房源")
@@ -251,6 +266,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：获取房源详情并增加浏览量。
+     */
     @GetMapping("/{id}")
     @Operation(summary = "获取房源详情", description = "根据ID返回房源信息并增加浏览量")
     public ResponseEntity<?> getProperty(@PathVariable Long id) {
@@ -265,6 +283,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：分页获取房源列表。
+     */
     @GetMapping
     @Operation(summary = "分页获取房源列表", description = "按分页参数返回所有房源")
     public ResponseEntity<?> getAllProperties(
@@ -285,6 +306,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：房东查看自己的房源列表。
+     */
     @GetMapping("/landlord/my-properties")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     @Operation(summary = "获取我的房源", description = "房东查看自己发布的房源列表")
@@ -302,6 +326,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：房东查看房源的入住人数和剩余房间。
+     */
     @GetMapping("/landlord/occupancy")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
     @Operation(summary = "房源入住与剩余房间", description = "房东查看房源的入住人数和剩余房间")
@@ -319,6 +346,9 @@ public class PropertyController {
     }
 
     // 确保searchProperties也返回PageResponse（而非IPage）
+    /**
+     * 接口：按城市、价格、卧室数等条件搜索房源。
+     */
     @GetMapping("/search")
     @Operation(summary = "搜索房源", description = "按城市、价格、卧室数等条件搜索房源")
     public ResponseEntity<?> searchProperties(
@@ -338,6 +368,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：获取热门房源列表（高浏览量）。
+     */
     @GetMapping("/popular")
     @Operation(summary = "热门房源", description = "获取浏览量较高的房源列表")
     public ResponseEntity<?> getPopularProperties() {
@@ -350,6 +383,9 @@ public class PropertyController {
         }
     }
 
+    /**
+     * 接口：获取高评分房源列表。
+     */
     @GetMapping("/top-rated")
     @Operation(summary = "高评分房源", description = "获取评分较高的房源列表")
     public ResponseEntity<?> getTopRatedProperties() {

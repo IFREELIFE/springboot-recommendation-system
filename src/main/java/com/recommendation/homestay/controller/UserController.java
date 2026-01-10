@@ -32,6 +32,9 @@ UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    /**
+     * 接口：获取当前登录用户的个人资料。
+     */
     @GetMapping("/me")
     @Operation(summary = "获取个人信息", description = "返回当前登录用户的个人资料")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserPrincipal currentUser) {
@@ -43,6 +46,9 @@ UserController {
         return ResponseEntity.ok(new ApiResponse(true, "获取个人信息成功", user));
     }
 
+    /**
+     * 接口：更新当前登录用户的基本资料与密码。
+     */
     @PutMapping("/me")
     @Operation(summary = "更新个人信息", description = "修改当前登录用户的基本资料与密码")
     public ResponseEntity<?> updateProfile(
