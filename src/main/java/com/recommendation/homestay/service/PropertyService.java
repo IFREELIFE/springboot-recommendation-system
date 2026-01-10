@@ -291,7 +291,9 @@ public class PropertyService {
         }
 
         void addGuests(int guests) {
-            this.activeGuests += guests;
+            if (guests > 0) {
+                this.activeGuests += guests;
+            }
         }
 
         int getOccupiedRooms() {
