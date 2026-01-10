@@ -72,6 +72,12 @@ const routes = [
   {
     path: '/create-property',
     redirect: '/landlord/create-property'
+  },
+  {
+    path: '/admin',
+    name: 'AdminDashboard',
+    component: () => import('../views/AdminDashboardPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
   }
 ]
 
@@ -89,7 +95,9 @@ router.beforeEach((to, from, next) => {
   } else if (to.meta.requiresLandlord && !userStore.isLandlord) {
     // 非房东访问房东专属页面时，返回首页
     next({ name: 'Home' })
-  } else if (userStore.isLandlord && ['Home', 'PropertyList', 'Recommendations'].includes(to.name)) {
+  } else if (to.meta.requiresAdmin && !userStore.isAdmin) {
+    next({ name: 'Home' })
+  } else if (userStore.isLandlord && !userStore.isAdmin && ['Home', 'PropertyList', 'Recommendations'].includes(to.name)) {
     // 房东不进入房源展示/搜索页面
     next({ name: 'MyProperties' })
   } else if (to.name === 'Login' && userStore.isAuthenticated) {
