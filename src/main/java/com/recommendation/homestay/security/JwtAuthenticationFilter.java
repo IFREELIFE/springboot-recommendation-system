@@ -37,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 Long userId = tokenProvider.getUserIdFromToken(jwt);
+                // 强制使用数据库状态以确保被冻结/解冻的账户立即生效，即使持有旧的 JWT
                 UserDetails userDetails = customUserDetailsService.loadUserById(userId);
                 if (!userDetails.isEnabled()) {
                     logger.warn("Disabled user {} attempted access to {}", userDetails.getUsername(), request.getRequestURI());

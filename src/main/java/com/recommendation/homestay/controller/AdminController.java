@@ -3,6 +3,7 @@ package com.recommendation.homestay.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.recommendation.homestay.dto.AdminAccountDTO;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.PageResponse;
@@ -86,8 +87,15 @@ public class AdminController {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, "管理员账号不可冻结"));
         }
+        UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("id", id).ne("role", User.Role.ADMIN.name());
+        updateWrapper.set("enabled", !freeze);
+        int updated = userMapper.update(null, updateWrapper);
+        if (updated == 0) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "管理员账号不可冻结"));
+        }
         user.setEnabled(!freeze);
-        userMapper.updateById(user);
         String message = freeze ? "账户已冻结" : "账户已解冻";
         return ResponseEntity.ok(new ApiResponse(true, message, toAccountDTO(user)));
     }
