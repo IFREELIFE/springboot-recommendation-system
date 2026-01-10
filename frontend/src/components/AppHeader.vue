@@ -12,7 +12,13 @@
           @select="handleMenuSelect"
           class="header-menu"
         >
-          <template v-if="!userStore.isLandlord">
+          <template v-if="userStore.isAdmin">
+            <el-menu-item index="/admin">
+              <el-icon><Grid /></el-icon>
+              <span>管理员</span>
+            </el-menu-item>
+          </template>
+          <template v-else-if="!userStore.isLandlord">
             <el-menu-item index="/">
               <el-icon><HomeFilled /></el-icon>
               <span>首页</span>
@@ -51,7 +57,12 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="my-orders">我的订单</el-dropdown-item>
                 <el-dropdown-item command="profile">个人信息</el-dropdown-item>
-                <template v-if="userStore.isLandlord">
+                <template v-if="userStore.isAdmin">
+                  <el-dropdown-item command="admin">
+                    管理员后台
+                  </el-dropdown-item>
+                </template>
+                <template v-else-if="userStore.isLandlord">
                   <el-dropdown-item command="my-properties">
                     我的房源
                   </el-dropdown-item>
@@ -111,6 +122,8 @@ const handleCommand = (command) => {
     router.push('/landlord/orders')
   } else if (command === 'create-property') {
     router.push('/landlord/create-property')
+  } else if (command === 'admin') {
+    router.push('/admin')
   }
 }
 </script>

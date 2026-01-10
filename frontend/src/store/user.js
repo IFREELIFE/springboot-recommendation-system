@@ -7,7 +7,8 @@ export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token'))
 
   const isAuthenticated = computed(() => !!token.value)
-  const isLandlord = computed(() => user.value?.role === 'ROLE_LANDLORD' || user.value?.role === 'ROLE_ADMIN')
+  const isAdmin = computed(() => user.value?.role === 'ROLE_ADMIN')
+  const isLandlord = computed(() => user.value?.role === 'ROLE_LANDLORD' || isAdmin.value)
 
   function setUser(userData) {
     user.value = userData
@@ -69,6 +70,7 @@ export const useUserStore = defineStore('user', () => {
     token,
     isAuthenticated,
     isLandlord,
+    isAdmin,
     setUser,
     setToken,
     checkAuth,
