@@ -24,6 +24,9 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    /**
+     * 接口：注册新用户账户，返回生成的用户ID。
+     */
     @PostMapping("/register")
     @Operation(summary = "注册用户", description = "创建新用户账户并返回用户ID")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
@@ -37,6 +40,9 @@ public class AuthController {
         }
     }
 
+    /**
+     * 接口：校验用户凭证并返回 JWT 令牌。
+     */
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "校验凭证并返回JWT令牌")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest request) {
