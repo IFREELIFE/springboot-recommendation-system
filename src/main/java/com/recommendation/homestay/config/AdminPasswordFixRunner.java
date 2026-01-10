@@ -1,6 +1,7 @@
 package com.recommendation.homestay.config;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.UserMapper;
 import java.util.Objects;
@@ -27,8 +28,9 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
 
     public AdminPasswordFixRunner(UserMapper userMapper,
                                   PasswordEncoder passwordEncoder,
+                                  // Default intended for local/dev environments; override in production via configuration
                                   @Value("${admin.default.password:admin123}") String defaultAdminPassword,
-                                  // Default matches the incorrect, repeating placeholder bcrypt value shipped in earlier seed data
+                                  // Default matches the incorrect, repeating placeholder bcrypt value shipped in earlier seed data and must stay in sync for compatibility
                                   @Value("${admin.legacy.placeholder-hash:$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu}")
                                   String legacyPlaceholderHash,
                                   @Value("${admin.legacy.fix-enabled:true}") boolean legacyFixEnabled) {
@@ -50,8 +52,11 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
         User admin = userMapper.selectOne(queryWrapper);
 
         if (legacyFixEnabled && admin != null && Objects.equals(admin.getPassword(), legacyPlaceholderHash)) {
-            admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
-            int updated = userMapper.updateById(admin);
+            String encodedPassword = passwordEncoder.encode(defaultAdminPassword);
+            UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("id", admin.getId()).eq("password", legacyPlaceholderHash)
+                    .set("password", encodedPassword);
+            int updated = userMapper.update(null, updateWrapper);
             if (updated > 0) {
                 log.info("Admin password hash was updated from legacy placeholder.");
             } else {
