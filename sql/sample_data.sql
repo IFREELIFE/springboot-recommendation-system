@@ -4,15 +4,15 @@ USE homestay_recommendation;
 
 -- Sample Landlords
 INSERT INTO users (username, email, password, phone, role, enabled) VALUES 
-('landlord_zhang', 'zhang@homestay.com', '$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu', '13800138001', 'LANDLORD', TRUE),
-('landlord_wang', 'wang@homestay.com', '$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu', '13800138002', 'LANDLORD', TRUE),
-('landlord_li', 'li@homestay.com', '$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu', '13800138003', 'LANDLORD', TRUE)
+('landlord_zhang', 'zhang@homestay.com', '$2a$10$hlM5aPjejmX3lXV/e4SfrODDupLDpTNDhYNXxqwzI3j3PGGdkdR1q', '13800138001', 'LANDLORD', TRUE),
+('landlord_wang', 'wang@homestay.com', '$2a$10$hlM5aPjejmX3lXV/e4SfrODDupLDpTNDhYNXxqwzI3j3PGGdkdR1q', '13800138002', 'LANDLORD', TRUE),
+('landlord_li', 'li@homestay.com', '$2a$10$hlM5aPjejmX3lXV/e4SfrODDupLDpTNDhYNXxqwzI3j3PGGdkdR1q', '13800138003', 'LANDLORD', TRUE)
 ON DUPLICATE KEY UPDATE username=username;
 
 -- Sample Users
 INSERT INTO users (username, email, password, phone, role, enabled) VALUES 
-('user_chen', 'chen@example.com', '$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu', '13900139001', 'USER', TRUE),
-('user_liu', 'liu@example.com', '$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu', '13900139002', 'USER', TRUE)
+('user_chen', 'chen@example.com', '$2a$10$WaEECV.3IU0KuSgLkODNWeTyDPxVZ49Cnk1xXWu3D8CV/sbopWSYG', '13900139001', 'USER', TRUE),
+('user_liu', 'liu@example.com', '$2a$10$WaEECV.3IU0KuSgLkODNWeTyDPxVZ49Cnk1xXWu3D8CV/sbopWSYG', '13900139002', 'USER', TRUE)
 ON DUPLICATE KEY UPDATE username=username;
 
 -- Sample Properties

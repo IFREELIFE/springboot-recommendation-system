@@ -97,15 +97,15 @@ CREATE TABLE IF NOT EXISTS user_property_interactions (
 
 -- Insert sample admin user (password: admin123)
 INSERT INTO users (username, email, password, role, enabled) VALUES 
-('admin', 'admin@homestay.com', '$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu', 'ADMIN', TRUE)
+('admin', 'admin@homestay.com', '$2a$10$6kvSxnyIwah1n4saOMslhehiMWmpRTXOKC3HZBNA6RpayDpjNLVbS', 'ADMIN', TRUE)
 ON DUPLICATE KEY UPDATE username=username;
 
 -- Insert sample landlord user (password: landlord123)
 INSERT INTO users (username, email, password, role, enabled) VALUES 
-('landlord1', 'landlord1@homestay.com', '$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu', 'LANDLORD', TRUE)
+('landlord1', 'landlord1@homestay.com', '$2a$10$hlM5aPjejmX3lXV/e4SfrODDupLDpTNDhYNXxqwzI3j3PGGdkdR1q', 'LANDLORD', TRUE)
 ON DUPLICATE KEY UPDATE username=username;
 
 -- Insert sample regular user (password: user123)
 INSERT INTO users (username, email, password, role, enabled) VALUES 
-('user1', 'user1@homestay.com', '$2a$10$xqTzp7Z5q7Z5q7Z5q7Z5qeN8qK5R5q7Z5q7Z5q7Z5q7Z5q7Z5q7Zu', 'USER', TRUE)
+('user1', 'user1@homestay.com', '$2a$10$WaEECV.3IU0KuSgLkODNWeTyDPxVZ49Cnk1xXWu3D8CV/sbopWSYG', 'USER', TRUE)
 ON DUPLICATE KEY UPDATE username=username;
