@@ -141,6 +141,22 @@ public class PropertyService {
             @CacheEvict(value = "properties", key = "#propertyId"),
             @CacheEvict(value = {"popularProperties", "topRatedProperties"}, allEntries = true)
     })
+    public Property setPropertyAvailability(Long propertyId, boolean available) {
+        Property property = propertyMapper.selectById(propertyId);
+        if (property == null) {
+            throw new IllegalArgumentException("未找到房源");
+        }
+        property.setAvailable(available);
+        propertyMapper.updateById(property);
+        indexToElasticsearch(property);
+        return property;
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "properties", key = "#propertyId"),
+            @CacheEvict(value = {"popularProperties", "topRatedProperties"}, allEntries = true)
+    })
     public Property appendImages(Long propertyId, List<String> newImages) {
         Property property = propertyMapper.selectById(propertyId);
         if (property == null) {
@@ -256,6 +272,7 @@ public class PropertyService {
             dto.setId(p.getId());
             dto.setTitle(p.getTitle());
             dto.setCity(p.getCity());
+            dto.setDistrict(p.getDistrict());
             dto.setAddress(p.getAddress());
             dto.setPrice(p.getPrice());
             dto.setBedrooms(p.getBedrooms());
@@ -265,6 +282,8 @@ public class PropertyService {
             dto.setOccupiedRooms(occupiedRooms);
             dto.setRemainingRooms(remainingRooms);
             dto.setActiveGuests(counter.getActiveGuests());
+            dto.setAvailable(p.getAvailable());
+            dto.setLandlordId(p.getLandlordId());
             return dto;
         }).collect(Collectors.toList());
 

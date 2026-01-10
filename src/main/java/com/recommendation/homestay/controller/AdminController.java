@@ -8,6 +8,7 @@ import com.recommendation.homestay.dto.AdminAccountDTO;
 import com.recommendation.homestay.dto.ApiResponse;
 import com.recommendation.homestay.dto.PageResponse;
 import com.recommendation.homestay.dto.PropertyOccupancyDTO;
+import com.recommendation.homestay.entity.Property;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.UserMapper;
 import com.recommendation.homestay.security.UserPrincipal;
@@ -112,6 +113,27 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(false, "获取房源入住情况失败"));
+        }
+    }
+
+    @PutMapping("/properties/{id}/freeze")
+    @Operation(summary = "冻结或解冻房源", description = "管理员可禁用或启用指定房源")
+    @Transactional
+    public ResponseEntity<?> freezeProperty(@PathVariable Long id,
+                                            @RequestParam(defaultValue = "true") boolean freeze) {
+        try {
+            Property property = propertyService.setPropertyAvailability(id, !freeze);
+            String message = freeze ? "房源已冻结" : "房源已解冻";
+            return ResponseEntity.ok(new ApiResponse(true, message, property));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "更新房源状态失败"));
         }
     }
 

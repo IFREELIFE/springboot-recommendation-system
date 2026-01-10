@@ -9,6 +9,7 @@ public class PropertyOccupancyDTO {
     private Long id;
     private String title;
     private String city;
+    private String district;
     private String address;
     private BigDecimal price;
     private Integer bedrooms;
@@ -18,4 +19,6 @@ public class PropertyOccupancyDTO {
     private Integer occupiedRooms;
     private Integer remainingRooms;
     private Integer activeGuests;
+    private Boolean available;
+    private Long landlordId;
 }

@@ -24,6 +24,13 @@ const adminService = {
     }
     const response = await api.get('/admin/properties/occupancy', { params })
     return response.data
+  },
+
+  async freezeProperty(id, freeze = true) {
+    const response = await api.put(`/admin/properties/${id}/freeze`, null, {
+      params: { freeze }
+    })
+    return response.data
   }
 }
 
