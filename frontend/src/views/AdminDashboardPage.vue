@@ -169,12 +169,12 @@ const landlordList = ref([])
 const propertyList = ref([])
 
 const normalizePageData = (pageData) => {
-  pageData = pageData?.data ?? pageData
+  const data = pageData?.data ?? pageData
   return {
-    records: pageData?.records || pageData?.content || [],
-    total: pageData?.total ?? pageData?.totalElements ?? 0,
-    size: pageData?.size ?? 10,
-    current: (pageData?.current ?? 1) - 1
+    records: data?.records || data?.content || [],
+    total: data?.total ?? data?.totalElements ?? 0,
+    size: data?.size ?? 10,
+    current: (data?.current ?? 1) - 1
   }
 }
 
