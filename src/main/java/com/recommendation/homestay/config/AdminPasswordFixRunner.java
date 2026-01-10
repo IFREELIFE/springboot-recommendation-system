@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.recommendation.homestay.entity.User;
 import com.recommendation.homestay.mapper.UserMapper;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,11 +53,12 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
         queryWrapper.eq("username", "admin");
         User admin = userMapper.selectOne(queryWrapper);
 
-        if (legacyFixEnabled && admin != null && Objects.equals(admin.getPassword(), legacyPlaceholderHash)) {
+        if (legacyFixEnabled && admin != null && isLegacyHash(admin.getPassword())) {
             String encodedPassword = passwordEncoder.encode(defaultAdminPassword);
             UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
             updateWrapper.eq("id", admin.getId()).eq("password", legacyPlaceholderHash)
                     .set("password", encodedPassword);
+            // Conditional update ensures concurrent starters only update while the legacy hash is still present.
             int updated = userMapper.update(null, updateWrapper);
             if (updated > 0) {
                 log.info("Admin password hash was updated from legacy placeholder.");
@@ -63,5 +66,14 @@ public class AdminPasswordFixRunner implements CommandLineRunner {
                 log.warn("Failed to update admin password hash from legacy placeholder.");
             }
         }
+    }
+
+    private boolean isLegacyHash(String currentPassword) {
+        if (currentPassword == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                currentPassword.getBytes(StandardCharsets.UTF_8),
+                legacyPlaceholderHash.getBytes(StandardCharsets.UTF_8));
     }
 }
