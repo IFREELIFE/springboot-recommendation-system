@@ -89,8 +89,8 @@ const fetchData = async () => {
     })
     if (response.success) {
       const payload = response.data || {}
-      occupancyList.value = payload.content || []
-      pagination.total = payload.totalElements || 0
+      occupancyList.value = payload.records || payload.content || []
+      pagination.total = payload.total || payload.totalElements || 0
     }
   } catch (error) {
     console.error('Failed to load occupancy data', error)
