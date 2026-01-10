@@ -36,19 +36,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                // 直接从 JWT 令牌提取用户信息，无需数据库查询
-                // 避免额外 SQL，提升性能
-                // 取舍：角色或邮箱变更需要重新登录才能生效
-                UserDetails userDetails = tokenProvider.getUserDetailsFromToken(jwt);
-                
-                logger.debug("JWT Authentication Filter: Authenticated user {} from token for request to {}", 
-                           userDetails.getUsername(), request.getRequestURI());
+                Long userId = tokenProvider.getUserIdFromToken(jwt);
+                UserDetails userDetails = customUserDetailsService.loadUserById(userId);
+                if (!userDetails.isEnabled()) {
+                    logger.warn("Disabled user {} attempted access to {}", userDetails.getUsername(), request.getRequestURI());
+                } else {
+                    logger.debug("JWT Authentication Filter: Authenticated user {} from token for request to {}", 
+                               userDetails.getUsername(), request.getRequestURI());
 
-                UsernamePasswordAuthenticationToken authentication = 
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    UsernamePasswordAuthenticationToken authentication = 
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
         } catch (Exception ex) {
             logger.error("Could not set user authentication in security context for request to {}: {}", 

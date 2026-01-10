@@ -45,6 +45,7 @@ public class JwtTokenProvider {
                 .claim("username", userPrincipal.getUsername())
                 .claim("email", userPrincipal.getEmail())
                 .claim("role", userPrincipal.getAuthorities().iterator().next().getAuthority())
+                .claim("enabled", userPrincipal.isEnabled())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
@@ -74,6 +75,7 @@ public class JwtTokenProvider {
         String username = claims.get("username", String.class);
         String email = claims.get("email", String.class);
         String role = claims.get("role", String.class);
+        Boolean enabled = claims.get("enabled", Boolean.class);
 
         logger.debug("Creating UserDetails from JWT token for userId: {}", userId);
         
@@ -85,7 +87,8 @@ public class JwtTokenProvider {
                 username,
                 email,
                 "",  // 无需密码——JWT 签名已验证用户身份
-                Collections.singleton(new SimpleGrantedAuthority(role))
+                Collections.singleton(new SimpleGrantedAuthority(role)),
+                enabled == null || enabled
         );
     }
 

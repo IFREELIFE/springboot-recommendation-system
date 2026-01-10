@@ -21,6 +21,7 @@ public class UserPrincipal implements UserDetails {
     private String email;
     private String password;
     private Collection<? extends GrantedAuthority> authorities;
+    private boolean enabled;
 
     public static UserPrincipal create(User user) {
         Collection<GrantedAuthority> authorities = Collections.singletonList(
@@ -32,7 +33,8 @@ public class UserPrincipal implements UserDetails {
             user.getUsername(),
             user.getEmail(),
             user.getPassword(),
-            authorities
+            authorities,
+            user.getEnabled() == null || Boolean.TRUE.equals(user.getEnabled())
         );
     }
 
@@ -68,6 +70,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

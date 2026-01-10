@@ -213,7 +213,20 @@ public class PropertyService {
 
     public PageResponse<PropertyOccupancyDTO> getPropertyOccupancy(Long landlordId, int page, int size) {
         IPage<Property> properties = getPropertiesByLandlord(landlordId, page, size);
+        return buildOccupancyPage(properties);
+    }
 
+    public PageResponse<PropertyOccupancyDTO> getPropertyOccupancyForAdmin(Long landlordId, int page, int size) {
+        Page<Property> pageParam = new Page<>(page + 1, size);
+        QueryWrapper<Property> queryWrapper = new QueryWrapper<>();
+        if (landlordId != null) {
+            queryWrapper.eq("landlord_id", landlordId);
+        }
+        IPage<Property> properties = propertyMapper.selectPage(pageParam, queryWrapper);
+        return buildOccupancyPage(properties);
+    }
+
+    private PageResponse<PropertyOccupancyDTO> buildOccupancyPage(IPage<Property> properties) {
         PageResponse<PropertyOccupancyDTO> response = new PageResponse<>();
         response.setTotal(properties.getTotal());
         response.setSize(properties.getSize());
