@@ -26,6 +26,11 @@
             <el-descriptions-item label="房型">
               {{ property.propertyType || '未指定' }}
             </el-descriptions-item>
+            <el-descriptions-item label="剩余房间">
+              <el-tag :type="(property.remainingRooms ?? 0) > 0 ? 'success' : 'danger'">
+                {{ property.remainingRooms ?? '未知' }}
+              </el-tag>
+            </el-descriptions-item>
             <el-descriptions-item label="可住人数">
               最多 {{ property.maxGuests }} 人
             </el-descriptions-item>

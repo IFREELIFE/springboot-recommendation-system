@@ -516,6 +516,11 @@ public class PropertyService {
         dto.setCreatedAt(property.getCreatedAt());
         dto.setUpdatedAt(property.getUpdatedAt());
         dto.setImages(property.getImages());
+        Map<Long, OccupancyCounter> occupancyMap = loadActiveOccupancy(Collections.singletonList(property.getId()));
+        OccupancyCounter counter = occupancyMap.getOrDefault(property.getId(), new OccupancyCounter());
+        int bedrooms = Optional.ofNullable(property.getBedrooms()).orElse(0);
+        int remainingRooms = Math.max(bedrooms - counter.getOccupiedRooms(), 0);
+        dto.setRemainingRooms(remainingRooms);
 
         List<String> base64List = new ArrayList<>();
         List<String> paths = new ArrayList<>();

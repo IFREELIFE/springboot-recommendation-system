@@ -30,4 +30,5 @@ public class PropertyResponseDTO {
     private LocalDateTime updatedAt;
     private String images;
     private List<String> imagesBase64;
+    private Integer remainingRooms;
 }
