@@ -55,26 +55,26 @@
             <el-avatar :icon="UserFilled" />
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="my-orders">我的订单</el-dropdown-item>
-                <el-dropdown-item command="profile">个人信息</el-dropdown-item>
                 <template v-if="userStore.isAdmin">
-                  <el-dropdown-item command="admin">
-                    管理员后台
-                  </el-dropdown-item>
+                  <el-dropdown-item command="admin">管理员控制台</el-dropdown-item>
                 </template>
-                <template v-else-if="userStore.isLandlord">
-                  <el-dropdown-item command="my-properties">
-                    我的房源
-                  </el-dropdown-item>
-                  <el-dropdown-item command="create-property">
-                    发布房源
-                  </el-dropdown-item>
-                  <el-dropdown-item command="property-occupancy">
-                    入住与剩余房间
-                  </el-dropdown-item>
-                  <el-dropdown-item command="landlord-orders">
-                    退订审核
-                  </el-dropdown-item>
+                <template v-else>
+                  <el-dropdown-item command="my-orders">我的订单</el-dropdown-item>
+                  <el-dropdown-item command="profile">个人信息</el-dropdown-item>
+                  <template v-if="userStore.isLandlord">
+                    <el-dropdown-item command="my-properties">
+                      我的房源
+                    </el-dropdown-item>
+                    <el-dropdown-item command="create-property">
+                      发布房源
+                    </el-dropdown-item>
+                    <el-dropdown-item command="property-occupancy">
+                      入住与剩余房间
+                    </el-dropdown-item>
+                    <el-dropdown-item command="landlord-orders">
+                      退订审核
+                    </el-dropdown-item>
+                  </template>
                 </template>
                 <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
