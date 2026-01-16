@@ -472,12 +472,12 @@ public class PropertyService {
         }
     }
 
-    @Cacheable(value = "popularProperties")
+    @Cacheable(value = "popularProperties", unless = "#result == null || #result.isEmpty()")
     public List<Property> getPopularProperties() {
         return propertyMapper.findTop10ByAvailableTrueOrderByBookingCountDesc();
     }
 
-    @Cacheable(value = "topRatedProperties")
+    @Cacheable(value = "topRatedProperties", unless = "#result == null || #result.isEmpty()")
     public List<Property> getTopRatedProperties() {
         return propertyMapper.findTop10ByAvailableTrueOrderByRatingDesc();
     }
