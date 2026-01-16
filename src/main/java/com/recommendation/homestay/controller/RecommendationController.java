@@ -26,6 +26,9 @@ public class RecommendationController {
 
     /**
      * 获取综合推荐列表，混合多种推荐算法返回房源。
+     * @param currentUser
+     * @param limit
+     * @return
      */
     @GetMapping
     @Operation(summary = "获取综合推荐", description = "基于多种算法为当前用户返回推荐房源")
@@ -45,6 +48,9 @@ public class RecommendationController {
 
     /**
      * 获取基于协同过滤的房源推荐。
+     * @param currentUser
+     * @param limit
+     * @return
      */
     @GetMapping("/collaborative")
     @Operation(summary = "协同过滤推荐", description = "基于相似用户行为的推荐列表")
@@ -64,6 +70,9 @@ public class RecommendationController {
 
     /**
      * 获取基于内容相似度的房源推荐。
+     * @param currentUser
+     * @param limit
+     * @return
      */
     @GetMapping("/content-based")
     @Operation(summary = "内容相似推荐", description = "根据房源内容相似度生成推荐")

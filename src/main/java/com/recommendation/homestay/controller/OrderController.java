@@ -30,6 +30,9 @@ public class OrderController {
 
     /**
      * 为当前用户创建订单。
+     * @param request
+     * @param currentUser
+     * @return
      */
     @PostMapping
     @Operation(summary = "创建订单", description = "为当前用户创建新的订单")
@@ -48,6 +51,9 @@ public class OrderController {
 
     /**
      * 按ID查询订单详情。
+     * @param id
+     * @param currentUser
+     * @return
      */
     @GetMapping("/{id}")
     @Operation(summary = "按ID获取订单", description = "根据订单ID返回订单详情")
@@ -65,6 +71,9 @@ public class OrderController {
 
     /**
      * 按订单编号查询订单。
+     * @param orderNumber
+     * @param currentUser
+     * @return
      */
     @GetMapping("/number/{orderNumber}")
     @Operation(summary = "按编号获取订单", description = "根据订单编号查询订单")
@@ -82,6 +91,10 @@ public class OrderController {
 
     /**
      * 分页获取当前登录用户的订单列表。
+     * @param currentUser
+     * @param page
+     * @param size
+     * @return
      */
     @GetMapping("/my-orders")
     @Operation(summary = "分页获取我的订单", description = "返回当前用户的订单列表")
@@ -101,6 +114,10 @@ public class OrderController {
 
     /**
      * 房东查看自己房源的订单列表。
+     * @param currentUser
+     * @param page
+     * @param size
+     * @return
      */
     @GetMapping("/landlord")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -121,6 +138,10 @@ public class OrderController {
 
     /**
      * 更新订单状态，如支付、取消等。
+     * @param id
+     * @param status
+     * @param currentUser
+     * @return
      */
     @PutMapping("/{id}/status")
     @Operation(summary = "更新订单状态", description = "更新订单的状态，如已支付、取消等")
@@ -139,6 +160,9 @@ public class OrderController {
 
     /**
      * 取消指定订单。
+     * @param id
+     * @param currentUser
+     * @return
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "取消订单", description = "取消指定订单")
@@ -159,6 +183,10 @@ public class OrderController {
 
     /**
      * 房东审核退订请求，决定是否批准。
+     * @param id
+     * @param approve
+     * @param currentUser
+     * @return
      */
     @PostMapping("/{id}/review")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")

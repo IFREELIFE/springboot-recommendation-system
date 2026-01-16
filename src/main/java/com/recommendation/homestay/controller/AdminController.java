@@ -42,6 +42,10 @@ public class AdminController {
 
     /**
      * 分页查询用户/房东账户列表，可按角色过滤。
+     * @param role
+     * @param page
+     * @param size
+     * @return
      */
     @GetMapping("/users")
     @Operation(summary = "用户与房东列表", description = "按角色筛选并查看所有账户状态")
@@ -73,6 +77,10 @@ public class AdminController {
 
     /**
      * 冻结或解冻指定账户，禁止或恢复登录使用。
+     * @param id
+     * @param freeze
+     * @param currentUser
+     * @return
      */
     @PutMapping("/users/{id}/freeze")
     @Operation(summary = "冻结或解冻账户", description = "管理员可对用户与房东账户进行冻结或解冻")
@@ -109,6 +117,10 @@ public class AdminController {
 
     /**
      * 查看所有房源的入住与剩余情况，可按房东筛选。
+     * @param page
+     * @param size
+     * @param landlordId
+     * @return
      */
     @GetMapping("/properties/occupancy")
     @Operation(summary = "房源入住情况", description = "查看所有房源的入住与剩余情况，可按房东筛选")
@@ -127,6 +139,9 @@ public class AdminController {
 
     /**
      * 冻结或解冻指定房源，控制房源是否可用。
+     * @param id
+     * @param freeze
+     * @return
      */
     @PutMapping("/properties/{id}/freeze")
     @Operation(summary = "冻结或解冻房源", description = "管理员可禁用或启用指定房源")
@@ -149,6 +164,11 @@ public class AdminController {
         }
     }
 
+    /**
+     * 将用户分页结果转换为管理员账户DTO分页结果。
+     * @param users
+     * @return
+     */
     private PageResponse<AdminAccountDTO> toAccountPage(IPage<User> users) {
         List<AdminAccountDTO> records = users.getRecords().stream()
                 .map(this::toAccountDTO)
@@ -162,6 +182,11 @@ public class AdminController {
         return response;
     }
 
+    /**
+     * 将用户实体转换为管理员账户DTO。
+     * @param user
+     * @return
+     */
     private AdminAccountDTO toAccountDTO(User user) {
         AdminAccountDTO dto = new AdminAccountDTO();
         dto.setId(user.getId());

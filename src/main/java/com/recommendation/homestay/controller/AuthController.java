@@ -26,6 +26,8 @@ public class AuthController {
 
     /**
      * 注册新用户账户，返回生成的用户ID。
+     * @param request
+     * @return
      */
     @PostMapping("/register")
     @Operation(summary = "注册用户", description = "创建新用户账户并返回用户ID")
@@ -42,6 +44,8 @@ public class AuthController {
 
     /**
      * 校验用户凭证并返回 JWT 令牌。
+     * @param request
+     * @return
      */
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "校验凭证并返回JWT令牌")

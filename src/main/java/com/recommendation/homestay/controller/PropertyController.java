@@ -56,6 +56,9 @@ public class PropertyController {
 
     /**
      * 创建房源，接收 JSON 参数。
+     * @param request
+     * @param currentUser
+     * @return
      */
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -75,6 +78,10 @@ public class PropertyController {
 
     /**
      * 创建房源并同时上传多张图片。
+     * @param request
+     * @param files
+     * @param currentUser
+     * @return
      */
     @PostMapping(value = "/with-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -146,6 +153,9 @@ public class PropertyController {
 
     /**
      * 单独上传房源图片，可选附加到已有房源。
+     * @param files
+     * @param propertyId
+     * @return
      */
     @PostMapping("/upload")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -231,6 +241,10 @@ public class PropertyController {
 
     /**
      * 根据ID更新房源基本信息。
+     * @param id
+     * @param request
+     * @param currentUser
+     * @return
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -250,6 +264,9 @@ public class PropertyController {
 
     /**
      * 根据ID删除房源。
+     * @param id
+     * @param currentUser
+     * @return
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -268,6 +285,8 @@ public class PropertyController {
 
     /**
      * 获取房源详情并增加浏览量。
+     * @param id
+     * @return
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取房源详情", description = "根据ID返回房源信息并增加浏览量")
@@ -284,7 +303,12 @@ public class PropertyController {
     }
 
     /**
-     * 分页获取房源列表。
+     * 获取房源详情并增加浏览量。
+     * @param page
+     * @param size
+     * @param sortBy
+     * @param sortDir
+     * @return
      */
     @GetMapping
     @Operation(summary = "分页获取房源列表", description = "按分页参数返回所有房源")
@@ -308,6 +332,10 @@ public class PropertyController {
 
     /**
      * 房东查看自己的房源列表。
+     * @param currentUser
+     * @param page
+     * @param size
+     * @return
      */
     @GetMapping("/landlord/my-properties")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -328,6 +356,10 @@ public class PropertyController {
 
     /**
      * 房东查看房源的入住人数和剩余房间。
+     * @param currentUser
+     * @param page
+     * @param size
+     * @return
      */
     @GetMapping("/landlord/occupancy")
     @PreAuthorize("hasAnyAuthority('ROLE_LANDLORD','ROLE_ADMIN','LANDLORD','ADMIN')")
@@ -347,6 +379,13 @@ public class PropertyController {
 
     /**
      * 按城市、价格、卧室数等条件搜索房源。
+     * @param city
+     * @param minPrice
+     * @param maxPrice
+     * @param bedrooms
+     * @param page
+     * @param size
+     * @return
      */
     @GetMapping("/search")
     @Operation(summary = "搜索房源", description = "按城市、价格、卧室数等条件搜索房源")
@@ -369,6 +408,7 @@ public class PropertyController {
 
     /**
      * 获取热门房源列表（高浏览量）。
+     * @return
      */
     @GetMapping("/popular")
     @Operation(summary = "热门房源", description = "获取浏览量较高的房源列表")
@@ -384,6 +424,7 @@ public class PropertyController {
 
     /**
      * 获取高评分房源列表。
+     * @return
      */
     @GetMapping("/top-rated")
     @Operation(summary = "高评分房源", description = "获取评分较高的房源列表")

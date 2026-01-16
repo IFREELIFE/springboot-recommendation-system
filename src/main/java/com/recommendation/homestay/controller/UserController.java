@@ -34,6 +34,8 @@ UserController {
 
     /**
      * 获取当前登录用户的个人资料。
+     * @param currentUser
+     * @return
      */
     @GetMapping("/me")
     @Operation(summary = "获取个人信息", description = "返回当前登录用户的个人资料")
@@ -48,6 +50,9 @@ UserController {
 
     /**
      * 更新当前登录用户的基本资料与密码。
+     * @param request
+     * @param currentUser
+     * @return
      */
     @PutMapping("/me")
     @Operation(summary = "更新个人信息", description = "修改当前登录用户的基本资料与密码")
