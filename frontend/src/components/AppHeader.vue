@@ -52,7 +52,7 @@
       <div class="right-section">
         <template v-if="userStore.isAuthenticated">
           <el-dropdown @command="handleCommand">
-            <el-avatar :icon="UserFilled" />
+            <el-avatar :src="avatarSrc || undefined" :icon="avatarSrc ? undefined : UserFilled" />
             <template #dropdown>
               <el-dropdown-menu>
                 <template v-if="userStore.isAdmin">
@@ -101,6 +101,7 @@ const route = useRoute()
 const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
+const avatarSrc = computed(() => userStore.user?.avatar || '')
 
 const handleMenuSelect = (index) => {
   router.push(index)
