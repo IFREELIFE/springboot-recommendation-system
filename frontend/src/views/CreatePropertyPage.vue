@@ -238,7 +238,12 @@ const loadProperty = async (id) => {
       form.maxGuests = data.maxGuests ?? 1
       form.propertyType = data.propertyType || ''
       form.amenities = parseAmenities(data.amenities)
-      uploadedImages.value = parseImages(data)
+      const parsedImages = parseImages(data)
+      uploadedImages.value = parsedImages
+      fileList.value = parsedImages.map((url, index) => ({
+        name: `image-${index + 1}`,
+        url
+      }))
     } else {
       ElMessage.error('房源信息获取失败')
     }

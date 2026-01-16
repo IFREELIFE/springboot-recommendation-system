@@ -94,6 +94,16 @@ const fetchProfile = async () => {
     const response = await userService.getProfile()
     if (response.success) {
       Object.assign(profileForm, response.data, { password: '' })
+      if (response.data?.avatar) {
+        avatarFileList.value = [
+          {
+            name: response.data.avatar.split('/').pop() || 'avatar',
+            url: response.data.avatar
+          }
+        ]
+      } else {
+        avatarFileList.value = []
+      }
       userStore.setUser({
         ...(userStore.user || {}),
         ...response.data,
