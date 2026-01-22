@@ -52,7 +52,7 @@
       <div class="right-section">
         <template v-if="userStore.isAuthenticated">
           <el-dropdown @command="handleCommand">
-            <el-avatar :icon="UserFilled" />
+            <el-avatar :src="userStore.user?.avatar" :icon="UserFilled" />
             <template #dropdown>
               <el-dropdown-menu>
                 <template v-if="userStore.isAdmin">
@@ -91,9 +91,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../store/user'
+import userService from '../services/userService'
 import { House, HomeFilled, Grid, StarFilled, UserFilled } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -101,6 +102,23 @@ const route = useRoute()
 const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
+
+const ensureProfile = async () => {
+  if (userStore.isAuthenticated && (!userStore.user || !userStore.user.avatar)) {
+    const response = await userService.getProfile()
+    if (response.success) {
+      userStore.setUser({
+        ...(userStore.user || {}),
+        ...response.data,
+        role: userStore.user?.role
+      })
+    }
+  }
+}
+
+onMounted(() => {
+  ensureProfile()
+})
 
 const handleMenuSelect = (index) => {
   router.push(index)

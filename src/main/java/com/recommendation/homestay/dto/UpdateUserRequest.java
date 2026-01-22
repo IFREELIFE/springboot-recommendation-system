@@ -11,7 +11,7 @@ public class UpdateUserRequest {
     @Email(message = "邮箱格式不正确")
     private String email;
 
-    @Pattern(regexp = "^\\+?[0-9\\s\\-]{6,20}$", message = "手机号格式不正确")
+    @Pattern(regexp = "^(\\+?[0-9\\s\\-]{6,20})?$", message = "手机号格式不正确（可留空）")
     private String phone;
 
     private String avatar;
