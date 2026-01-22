@@ -52,7 +52,7 @@
       <div class="right-section">
         <template v-if="userStore.isAuthenticated">
           <el-dropdown @command="handleCommand">
-            <el-avatar :icon="UserFilled" />
+            <el-avatar :src="userStore.user?.avatar" :icon="UserFilled" />
             <template #dropdown>
               <el-dropdown-menu>
                 <template v-if="userStore.isAdmin">
