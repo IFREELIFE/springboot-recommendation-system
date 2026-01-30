@@ -1,0 +1,33 @@
+flowchart LR
+    subgraph Client[前端 SPA]
+        UI[Vue3 + Element Plus]
+        Router[Vue Router]
+        Store[Pinia 状态]
+    end
+
+    subgraph Backend[后端服务]
+        APIGW[Spring Boot API 网关/统一入口]
+        Auth[认证与权限]
+        Rec[推荐服务 - 协同过滤+内容]
+        Order[订单服务]
+        Property[房源服务]
+        UserSvc[用户服务]
+    end
+
+    DB[(MySQL)]:::db
+    Cache[(Redis)]:::cache
+
+    Client -->|Axios /api| APIGW
+    APIGW --> Auth
+    APIGW --> Rec
+    APIGW --> Order
+    APIGW --> Property
+    APIGW --> UserSvc
+    Auth --> DB
+    Rec --> DB
+    Order --> DB
+    Property --> DB
+    UserSvc --> DB
+    Rec --> Cache
+    classDef db fill:#f2f2ff,stroke:#6370f4;
+    classDef cache fill:#fdf2e9,stroke:#e67e22;
