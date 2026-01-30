@@ -1,0 +1,47 @@
+erDiagram
+    USER {
+        bigint id PK
+        varchar username
+        varchar password_hash
+        varchar role
+        datetime created_at
+    }
+    PROPERTY {
+        bigint id PK
+        varchar title
+        varchar city
+        decimal price
+        int bedrooms
+        bigint landlord_id FK
+        float rating
+    }
+    ORDER {
+        bigint id PK
+        bigint user_id FK
+        bigint property_id FK
+        datetime check_in
+        datetime check_out
+        varchar status
+        decimal total_price
+    }
+    RECOMMENDATION {
+        bigint id PK
+        bigint user_id FK
+        bigint property_id FK
+        float score
+        varchar strategy
+    }
+    USER_PROPERTY_INTERACTION {
+        bigint id PK
+        bigint user_id FK
+        bigint property_id FK
+        varchar action
+        datetime occurred_at
+    }
+    USER ||--o{ ORDER : places
+    USER ||--o{ RECOMMENDATION : receives
+    USER ||--o{ USER_PROPERTY_INTERACTION : acts_on
+    PROPERTY ||--o{ ORDER : booked_by
+    PROPERTY ||--o{ RECOMMENDATION : recommended_to
+    PROPERTY ||--o{ USER_PROPERTY_INTERACTION : interacted_by
+    USER ||--o{ PROPERTY : owns

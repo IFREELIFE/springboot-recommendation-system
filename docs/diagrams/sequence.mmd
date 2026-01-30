@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant U as 用户
+    participant FE as 前端(Vue)
+    participant API as 后端API
+    participant REC as 推荐服务
+    participant ORD as 订单服务
+    participant DB as MySQL
+
+    U->>FE: 访问推荐页面
+    FE->>API: GET /api/recommendations (附 JWT)
+    API->>REC: 生成推荐列表
+    REC->>DB: 读取用户行为与房源画像
+    REC-->>API: 推荐结果
+    API-->>FE: 返回房源列表
+    U->>FE: 选择房源下单
+    FE->>API: POST /api/orders
+    API->>ORD: 创建订单并校验库存
+    ORD->>DB: 写入订单记录
+    ORD-->>API: 下单成功
+    API-->>FE: 返回订单信息
+    FE-->>U: 显示确认结果

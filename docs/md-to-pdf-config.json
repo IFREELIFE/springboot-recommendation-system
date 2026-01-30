@@ -1,0 +1,21 @@
+{
+  "stylesheet": [
+    "pdf-style.css"
+  ],
+  "body_class": "markdown-body",
+  "launch_options": {
+    "args": ["--no-sandbox"]
+  },
+  "marked_options": {
+    "gfm": true,
+    "tables": true
+  },
+  "pdf_options": {
+    "format": "A4",
+    "margin": "20mm"
+  },
+  "highlight_style": "github",
+  "mermaid_initialize_options": {
+    "theme": "default"
+  }
+}
