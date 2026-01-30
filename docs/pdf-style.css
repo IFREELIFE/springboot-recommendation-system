@@ -1,7 +1,11 @@
 .markdown-body {
-  font-family: "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Noto Sans CJK SC", "Noto Sans SC", "Noto Serif CJK SC", "Microsoft YaHei", "PingFang SC", "SimSun", "SimHei", "Helvetica Neue", Arial, sans-serif;
   font-size: 12px;
   line-height: 1.6;
+}
+
+* {
+  font-family: inherit;
 }
 
 pre, code {
