@@ -1,5 +1,19 @@
+@font-face {
+  font-family: "Source Han Sans SC";
+  src: url("/docs/fonts/SourceHanSansSC-Regular.woff2") format("woff2"),
+       url("/docs/fonts/SourceHanSansSC-Regular.otf") format("opentype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Source Han Sans SC";
+  src: url("/docs/fonts/SourceHanSansSC-Bold.woff2") format("woff2"),
+       url("/docs/fonts/SourceHanSansSC-Bold.otf") format("opentype");
+  font-weight: 700;
+}
+
 .markdown-body {
-  font-family: "Noto Serif CJK SC", "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "SimSun", "SimHei", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Source Han Sans SC", "Noto Serif CJK SC", "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "SimSun", "SimHei", "Helvetica Neue", Arial, sans-serif;
   font-size: 12.5px;
   line-height: 1.7;
   color: #111;
@@ -35,6 +49,21 @@ img {
 }
 
 p {
-  text-align: justify;
-  text-justify: inter-ideograph;
+  text-align: left;
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+li {
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+table {
+  table-layout: fixed;
+}
+
+table th, table td {
+  word-break: break-word;
+  word-wrap: break-word;
 }
