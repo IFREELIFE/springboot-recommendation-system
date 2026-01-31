@@ -35,6 +35,21 @@ img {
 }
 
 p {
-  text-align: justify;
-  text-justify: inter-ideograph;
+  text-align: left;
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+li {
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+table {
+  table-layout: fixed;
+}
+
+table th, table td {
+  word-break: break-word;
+  word-wrap: break-word;
 }

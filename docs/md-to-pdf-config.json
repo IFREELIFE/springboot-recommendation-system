@@ -1,6 +1,6 @@
 {
   "stylesheet": [
-    "pdf-style.css"
+    "docs/pdf-style.css"
   ],
   "body_class": "markdown-body",
   "launch_options": {
